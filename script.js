@@ -1,9 +1,20 @@
 const hamburger = document.querySelector('.hamburger');
 const menu = document.querySelector('.toolbar-menu');
 
+function setMenuOpen(open) {
+  hamburger.classList.toggle('active', open);
+  menu.classList.toggle('show', open);
+  // Blurs the page and locks scrolling behind the mobile menu
+  document.documentElement.classList.toggle('nav-open', open);
+}
+
 hamburger.addEventListener('click', function () {
-  this.classList.toggle('active');
-  menu.classList.toggle('show');
+  setMenuOpen(!menu.classList.contains('show'));
+});
+
+// Close the menu once a link is chosen
+menu.querySelectorAll('a').forEach(link => {
+  link.addEventListener('click', () => setMenuOpen(false));
 });
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -18,17 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const source = heroNameElement.getAttribute(lang === 'el' ? 'data-greek' : 'data-english');
     if (!source) return;
 
-    const withLetters = source
-      .split('')
-      .map(char => {
-        if (char === ' ' || char === '\n') return '<span class="hero-letter">&nbsp;</span>';
-        if (char === '<' || char === '>') return char;
-        return `<span class="hero-letter">${char}</span>`;
-      })
-      .join('')
-      .replace(/<span class="hero-letter">&lt;<\/span>br<span class="hero-letter">&gt;<\/span>/g, '<br>');
-
-    heroNameElement.innerHTML = withLetters;
+    heroNameElement.innerHTML = buildHeroNameHTML(source);
   }
 
   function applyLanguageState(lang) {
@@ -50,6 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     rebuildHeroName(lang);
+    document.dispatchEvent(new CustomEvent('app:languagechange', { detail: { lang } }));
   }
 
   function updateInactiveFlags() {
@@ -80,6 +82,20 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   languageIcons.forEach(icon => {
+    icon.addEventListener('mouseenter', function () {
+      if (!this.classList.contains('active')) {
+        this.src = this.getAttribute('data-active');
+        this.style.filter = 'none';
+      }
+    });
+
+    icon.addEventListener('mouseleave', function () {
+      if (!this.classList.contains('active')) {
+        this.src = this.getAttribute('data-default');
+        updateInactiveFlags();
+      }
+    });
+
     icon.addEventListener('click', function (event) {
       event.preventDefault();
       event.stopPropagation();
@@ -103,17 +119,30 @@ document.addEventListener('click', function (e) {
   const isMenuOpen = menu.classList.contains('show');
   
   if (isMenuOpen && !isClickInsideMenu && !isClickOnHamburger) {
-    hamburger.classList.remove('active');
-    menu.classList.remove('show');
+    setMenuOpen(false);
   }
 });
 
+// Splits the name into floating letters, grouped per word so a line
+// can only break between words (never mid-word on narrow screens)
+function buildHeroNameHTML(text) {
+  let index = 0;
+  const letter = char =>
+    `<span class="hero-letter" style="animation-delay: ${(index++ * 0.1).toFixed(1)}s">${char}</span>`;
+
+  return text
+    .replace(/<br\s*\/?>/gi, ' ')
+    .trim()
+    .split(/\s+/)
+    .map((word, i) => {
+      if (i > 0) index++; // keep the wave timing gap where the space was
+      return `<span class="hero-word">${[...word].map(letter).join('')}</span>`;
+    })
+    .join(' ');
+}
+
 const heroName = document.querySelector('.hero-name');
-const text = heroName.innerText;
-heroName.innerHTML = text.split('').map(char => {
-  if (char === ' ' || char === '\n') return `<span class="hero-letter">&nbsp;</span>`;
-  return `<span class="hero-letter">${char}</span>`;
-}).join('');
+heroName.innerHTML = buildHeroNameHTML(heroName.innerText);
 
 function getCurrentLanguage() {
   return document.documentElement.lang === 'el' ? 'el' : 'en';
@@ -516,6 +545,10 @@ if (aboutMeCarousel && aboutMeCarouselRegion && aboutDescriptionP) {
 
   // Initial render
   updateCards();
+
+  document.addEventListener('app:languagechange', () => {
+    requestAnimationFrame(() => updateCards());
+  });
 } else {
   console.warn("About Me carousel elements not found. Vertical carousel inactive.");
 }
@@ -793,6 +826,21 @@ document.addEventListener('DOMContentLoaded', () => {
   let textDragCurrentTranslateX = 0;
   let textDragAnimationID = 0;
 
+  function syncPortfolioLanguageState() {
+    updateUI();
+
+    if (!currentProjectData) return;
+
+    if (modalProjectTitle) {
+      modalProjectTitle.textContent = getCurrentLanguage() === 'el'
+        ? (currentProjectData.modalHeaderEl || currentProjectData.modalHeader || 'Project Details')
+        : (currentProjectData.modalHeader || 'Project Details');
+    }
+
+    generateTextCarouselPagesAndDots();
+    goToTextPage(currentTextPageIndex, false);
+  }
+
   // --- Placeholder Project Data (ensure this matches your intended structure) ---
   const portfolioProjectsData = [
     {
@@ -1041,6 +1089,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (textCarouselNextBtn) {
     textCarouselNextBtn.addEventListener('click', () => goToTextPage(currentTextPageIndex + 1));
   }
+
+  document.addEventListener('app:languagechange', syncPortfolioLanguageState);
 
   // --- Text Carousel Drag Logic ---
   function getTextPositionX(event) {
@@ -1682,370 +1732,3 @@ document.querySelectorAll('.about-btn').forEach(button => {
   });
 });
 
-document.addEventListener('DOMContentLoaded', function () {
-  const langIcons = document.querySelectorAll('.lang-icon');
-  const aboutSection = document.getElementById('about-me');
-  const englishIcon = document.querySelector('.lang-icon[alt="English"]');
-
-  function renderLocalizedHeroName(lang) {
-    const heroNameElement = document.querySelector('.hero-name');
-    if (!heroNameElement) return;
-
-    const textMarkup = heroNameElement.getAttribute(lang === 'el' ? 'data-greek' : 'data-english');
-    if (!textMarkup) return;
-
-    const rendered = textMarkup
-      .split('')
-      .map(char => {
-        if (char === ' ' || char === '\n') return '<span class="hero-letter">&nbsp;</span>';
-        if (char === '<' || char === '>') return char;
-        return `<span class="hero-letter">${char}</span>`;
-      })
-      .join('')
-      .replace(/<span class="hero-letter">&lt;<\/span>br<span class="hero-letter">&gt;<\/span>/g, '<br>');
-
-    heroNameElement.innerHTML = rendered;
-  }
-
-  function applyLanguage(lang) {
-    document.documentElement.lang = lang;
-
-    document.querySelectorAll('[data-greek][data-english]').forEach(element => {
-      if (element.classList.contains('hero-name')) {
-        return;
-      }
-
-      const nextText = element.getAttribute(lang === 'el' ? 'data-greek' : 'data-english');
-      if (!nextText) return;
-
-      if (nextText.includes('<br>')) {
-        element.innerHTML = nextText;
-      } else {
-        element.textContent = nextText;
-      }
-    });
-
-    renderLocalizedHeroName(lang);
-
-    if (typeof updateCards === 'function') {
-      updateCards();
-    }
-
-    const activeSlide = document.querySelector('.portfolio-slide.active');
-    const mobileTitle = document.querySelector('.portfolio-mobile-title');
-    const mobileDesc = document.querySelector('.portfolio-mobile-description');
-    if (activeSlide && mobileTitle && mobileDesc) {
-      const titleEl = activeSlide.querySelector('.portfolio-item-title');
-      const descEl = activeSlide.querySelector('.portfolio-item-description');
-      mobileTitle.innerText = titleEl ? titleEl.innerText : '';
-      mobileDesc.innerText = descEl ? descEl.innerText : '';
-    }
-
-    if (typeof currentProjectData !== 'undefined' && currentProjectData && typeof generateTextCarouselPagesAndDots === 'function' && typeof goToTextPage === 'function') {
-      if (typeof modalProjectTitle !== 'undefined' && modalProjectTitle) {
-        modalProjectTitle.textContent = lang === 'el'
-          ? (currentProjectData.modalHeaderEl || currentProjectData.modalHeader || 'Project Details')
-          : (currentProjectData.modalHeader || 'Project Details');
-      }
-      const pageIndex = typeof currentTextPageIndex !== 'undefined' ? currentTextPageIndex : 0;
-      generateTextCarouselPagesAndDots();
-      goToTextPage(pageIndex, false);
-    }
-  }
-
-  function updateInactiveIconFilters() {
-    const isPastAbout = aboutSection && window.scrollY > (aboutSection.offsetTop + aboutSection.offsetHeight);
-
-    langIcons.forEach(icon => {
-      if (icon.classList.contains('active')) {
-        icon.style.filter = 'none';
-        return;
-      }
-
-      icon.classList.toggle('black', !!isPastAbout);
-      icon.style.filter = isPastAbout
-        ? 'brightness(0) contrast(3)'
-        : 'brightness(0) invert(1) contrast(3)';
-    });
-  }
-
-  function activateLanguage(icon) {
-    langIcons.forEach(otherIcon => {
-      const isActive = otherIcon === icon;
-      otherIcon.classList.toggle('active', isActive);
-      otherIcon.src = otherIcon.getAttribute(isActive ? 'data-active' : 'data-default');
-    });
-
-    updateInactiveIconFilters();
-    applyLanguage(icon.getAttribute('alt') === 'Greek' ? 'el' : 'en');
-  }
-
-  langIcons.forEach(icon => {
-    icon.addEventListener('click', function (event) {
-      event.preventDefault();
-      activateLanguage(this);
-    });
-  });
-
-  window.addEventListener('scroll', updateInactiveIconFilters);
-
-  if (englishIcon) {
-    activateLanguage(englishIcon);
-  } else {
-    applyLanguage('en');
-  }
-});
-
-// === Language Icon Switcher ===
-document.addEventListener('DOMContentLoaded', function() {
-  const langIcons = document.querySelectorAll('.lang-icon');
-  const aboutSection = document.getElementById('about-me');
-  let currentLang = 'en'; // Default language is English
-
-  function renderHeroNameWithLetters(markup) {
-    return markup
-      .split('')
-      .map(char => {
-        if (char === ' ' || char === '\n') return '<span class="hero-letter">&nbsp;</span>';
-        if (char === '<' || char === '>') return char;
-        return `<span class="hero-letter">${char}</span>`;
-      })
-      .join('')
-      .replace(/<span class="hero-letter">&lt;<\/span>br<span class="hero-letter">&gt;<\/span>/g, '<br>');
-  }
-  
-  // Set English flag as active by default
-  const englishIcon = document.querySelector('[alt="English"]');
-  if (englishIcon) {
-    englishIcon.classList.add('active');
-    englishIcon.src = englishIcon.getAttribute('data-active');
-    englishIcon.style.filter = 'none';
-  }
-  
-  // Language switching function
-  function switchLanguage(lang) {
-    currentLang = lang;
-    document.documentElement.lang = lang;
-    updateAllTexts(lang);
-    updateDynamicContentLanguage(lang);
-  }
-  
-  // Function to update all texts based on current language
-  function updateAllTexts(lang) {
-    const translatableElements = document.querySelectorAll('[data-greek]');
-    
-    translatableElements.forEach(element => {
-      
-      // Skip about description elements as they're handled by updateAboutDescription
-      if (element.parentElement.classList.contains('about-description')) {
-        console.log('Skipping about description element');
-        return;
-      }
-      
-      if (lang === 'el') {
-        // Switch to Greek
-        const greekText = element.getAttribute('data-greek');
-        if (element.classList.contains('hero-name')) {
-          element.innerHTML = renderHeroNameWithLetters(greekText);
-        } else if (element.tagName === 'SPAN' && greekText.includes('<br>')) {
-          // Handle multi-line text like hero name
-          element.innerHTML = greekText;
-        } else {
-          element.textContent = greekText;
-        }
-      } else {
-        // Switch to English (restore original)
-        if (element.tagName === 'SPAN' && element.classList.contains('hero-name')) {
-          const englishMarkup = element.getAttribute('data-english') || 'ARGYRIS<br>SERGIANNIS';
-          element.innerHTML = renderHeroNameWithLetters(englishMarkup);
-        } else if (element.classList.contains('about-btn')) {
-          // Restore original English for about buttons
-          if (element.classList.contains('my-work-btn')) {
-            element.textContent = 'MY WORK';
-          } else {
-            element.textContent = 'ABOUT ME';
-          }
-        } else if (element.tagName === 'A') {
-          // Restore original English for navigation links
-          const navTranslations = {
-            'ΑΡΧΙΚΗ': 'HOME',
-            'ΣΧΕΤΙΚΑ': 'ABOUT',
-            'ΔΟΥΛΕΙΑ': 'MY WORK',
-            'ΕΠΙΚΟΙΝΩΝΙΑ': 'CONTACT'
-          };
-          const currentText = element.textContent;
-          element.textContent = navTranslations[currentText] || currentText;
-        } else if (element.tagName === 'H2' || element.tagName === 'H3') {
-          // Restore original English for headings
-          const headingTranslations = {
-            'ΣΧΕΔΙΑΣΤΙΚΗ ΕΠΙΚΕΝΤΡΩΣΗ': 'DESIGN FOCUS',
-            'ΣΧΕΔΙΑΣΤΙΚΗ ΕΠΙΚΕΝΤΡΩΣΗ UI/UX': 'UI/UX DESIGN FOCUS',
-            'Η ΔΟΥΛΕΙΑ ΜΟΥ': 'MY WORK'
-          };
-          const currentText = element.textContent;
-          element.textContent = headingTranslations[currentText] || currentText;
-        } else if (element.tagName === 'P') {
-          // Skip about description paragraphs as they're handled by carousel
-          if (!element.parentElement.classList.contains('about-description')) {
-            element.textContent = 'SPECIALIZING IN USER-CENTRIC PRODUCT DESIGN, I CRAFT INTUITIVE, ENGAGING EXPERIENCES THAT BLEND CREATIVITY WITH FUNCTIONAL EXCELLENCE, TRANSFORMING COMPLEX IDEAS INTO ELEGANT, USER-FRIENDLY SOLUTIONS THAT RESONATE WITH PEOPLE.';
-          }
-        }
-      }
-    });
-  }
-  
-  // Legacy helper (now disabled) – titles/descriptions are driven directly
-  // by the main carousel logic to avoid mismatches with icons.
-  function updateAboutDescription() {
-    return;
-  }
-
-  function updateAllTexts(lang) {
-    const translatableElements = document.querySelectorAll('[data-greek][data-english]');
-
-    translatableElements.forEach(element => {
-      const nextText = element.getAttribute(lang === 'el' ? 'data-greek' : 'data-english');
-      if (!nextText) return;
-
-      if (nextText.includes('<br>')) {
-        element.innerHTML = nextText;
-      } else {
-        element.textContent = nextText;
-      }
-    });
-  }
-
-  function updateDynamicContentLanguage(lang) {
-    if (typeof updateCards === 'function') {
-      updateCards();
-    }
-
-    const mobileTitle = document.querySelector('.portfolio-mobile-title');
-    const mobileDesc = document.querySelector('.portfolio-mobile-description');
-    const activeSlide = document.querySelector('.portfolio-slide.active');
-    if (activeSlide && mobileTitle && mobileDesc) {
-      const titleEl = activeSlide.querySelector('.portfolio-item-title');
-      const descEl = activeSlide.querySelector('.portfolio-item-description');
-      mobileTitle.innerText = titleEl ? titleEl.innerText : '';
-      mobileDesc.innerText = descEl ? descEl.innerText : '';
-    }
-
-    if (currentProjectData && typeof generateTextCarouselPagesAndDots === 'function' && typeof goToTextPage === 'function') {
-      const currentIndex = currentTextPageIndex;
-      if (modalProjectTitle) {
-        modalProjectTitle.textContent = lang === 'el'
-          ? (currentProjectData.modalHeaderEl || currentProjectData.modalHeader || 'Project Details')
-          : (currentProjectData.modalHeader || 'Project Details');
-      }
-      generateTextCarouselPagesAndDots();
-      goToTextPage(currentIndex, false);
-    }
-  }
-  
-  // Monitor carousel changes to maintain language
-  function setupCarouselLanguageMonitor() {
-    const carousel = document.querySelector('.about-me .carousel');
-    if (carousel) {
-      // Create a MutationObserver to watch for changes in the carousel
-      const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-          if (mutation.type === 'childList' || mutation.type === 'characterData') {
-            // Re-apply language settings after carousel change
-            setTimeout(() => {
-              updateAboutDescription();
-              updateAllTexts(currentLang);
-              updateDynamicContentLanguage(currentLang);
-            }, 50);
-          }
-        });
-      });
-      
-      // Start observing the carousel for changes
-      observer.observe(carousel, {
-        childList: true,
-        subtree: true,
-        characterData: true
-      });
-    }
-  }
-  
-  // Initialize carousel monitor
-  setupCarouselLanguageMonitor();
-
-  document.documentElement.lang = currentLang;
-  
-  // Initial update of about description
-  updateAboutDescription();
-  updateAllTexts(currentLang);
-  updateDynamicContentLanguage(currentLang);
-  
-  langIcons.forEach(icon => {
-    // Mouse enter - show active state with actual colors
-    icon.addEventListener('mouseenter', function() {
-      if (!this.classList.contains('active')) {
-        this.src = this.getAttribute('data-active');
-        this.style.filter = 'none';
-      }
-    });
-    
-    // Mouse leave - return to default state with appropriate filter
-    icon.addEventListener('mouseleave', function() {
-      if (!this.classList.contains('active')) {
-        this.src = this.getAttribute('data-default');
-        // Restore appropriate filter based on scroll position
-        if (this.classList.contains('black')) {
-          this.style.filter = 'brightness(0) contrast(3)';
-        } else {
-          this.style.filter = 'brightness(0) invert(1) contrast(3)';
-        }
-      }
-    });
-    
-    // Click - set permanent active state and switch language
-    icon.addEventListener('click', function() {
-      // Remove active class from all icons and reset to default images
-      langIcons.forEach(otherIcon => {
-        otherIcon.classList.remove('active');
-        otherIcon.src = otherIcon.getAttribute('data-default');
-        // Restore appropriate filter for each icon
-        if (otherIcon.classList.contains('black')) {
-          otherIcon.style.filter = 'brightness(0) contrast(3)';
-        } else {
-          otherIcon.style.filter = 'brightness(0) invert(1) contrast(3)';
-        }
-      });
-      
-      // Add active class and set active image with no filter
-      this.classList.add('active');
-      this.src = this.getAttribute('data-active');
-      this.style.filter = 'none';
-      
-      // Switch language based on clicked icon
-      const lang = this.getAttribute('alt') === 'English' ? 'en' : 'el';
-      switchLanguage(lang);
-    });
-  });
-  
-  // Change icons to black after about section
-  window.addEventListener('scroll', function() {
-    if (aboutSection) {
-      const aboutBottom = aboutSection.offsetTop + aboutSection.offsetHeight;
-      
-      if (window.scrollY > aboutBottom) {
-        langIcons.forEach(icon => {
-          if (!icon.classList.contains('active')) {
-            icon.classList.add('black');
-            icon.style.filter = 'brightness(0) contrast(3)';
-          }
-        });
-      } else {
-        langIcons.forEach(icon => {
-          icon.classList.remove('black');
-          if (!icon.classList.contains('active')) {
-            icon.style.filter = 'brightness(0) invert(1) contrast(3)';
-          }
-        });
-      }
-    }
-  });
-});
