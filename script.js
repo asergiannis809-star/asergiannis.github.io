@@ -12,15 +12,35 @@ hamburger.addEventListener('click', function () {
   setMenuOpen(!menu.classList.contains('show'));
 });
 
+// Intro hints (scroll + language): once the visitor has scrolled past the
+// intro, hide them for good. The language hint is fixed to the screen, so it
+// also copies the intro's scroll fade while the intro is still in view.
+const introHints = document.querySelectorAll('.scroll-hint, .lang-hint');
+const langHint = document.querySelector('.lang-hint');
+const introSection = document.getElementById('main-content');
+if (introHints.length) {
+  // Mirror the intro's opacity whenever the page's scroll code changes it
+  const fadeObserver = (langHint && introSection)
+    ? new MutationObserver(() => { langHint.style.opacity = introSection.style.opacity; })
+    : null;
+  if (fadeObserver) fadeObserver.observe(introSection, { attributes: true, attributeFilter: ['style'] });
+
+  const dismissIntroHints = () => {
+    if (window.scrollY < window.innerHeight) return;
+    introHints.forEach(hint => hint.classList.add('is-dismissed'));
+    if (fadeObserver) fadeObserver.disconnect();
+    window.removeEventListener('scroll', dismissIntroHints);
+  };
+  window.addEventListener('scroll', dismissIntroHints, { passive: true });
+}
+
 // Close the menu once a link is chosen
 menu.querySelectorAll('a').forEach(link => {
   link.addEventListener('click', () => setMenuOpen(false));
 });
 
 document.addEventListener('DOMContentLoaded', function () {
-  const languageIcons = document.querySelectorAll('.lang-icon');
-  const englishFlag = document.querySelector('.lang-icon[alt="English"]');
-  const aboutSection = document.getElementById('about-me');
+  const languageOptions = document.querySelectorAll('.lang-option');
 
   function rebuildHeroName(lang) {
     const heroNameElement = document.querySelector('.hero-name');
@@ -54,62 +74,26 @@ document.addEventListener('DOMContentLoaded', function () {
     document.dispatchEvent(new CustomEvent('app:languagechange', { detail: { lang } }));
   }
 
-  function updateInactiveFlags() {
-    const useBlack = aboutSection && window.scrollY > (aboutSection.offsetTop + aboutSection.offsetHeight);
-
-    languageIcons.forEach(icon => {
-      if (icon.classList.contains('active')) {
-        icon.style.filter = 'none';
-        return;
-      }
-
-      icon.classList.toggle('black', !!useBlack);
-      icon.style.filter = useBlack
-        ? 'brightness(0) contrast(3)'
-        : 'brightness(0) invert(1) contrast(3)';
+  // Split flag switch: each half is a button; the active half shows in full colour
+  function setLanguage(lang) {
+    languageOptions.forEach(option => {
+      const isActive = option.dataset.lang === lang;
+      option.classList.toggle('active', isActive);
+      option.setAttribute('aria-pressed', String(isActive));
     });
+
+    applyLanguageState(lang);
   }
 
-  function activateLanguage(icon) {
-    languageIcons.forEach(otherIcon => {
-      const isActive = otherIcon === icon;
-      otherIcon.classList.toggle('active', isActive);
-      otherIcon.src = otherIcon.getAttribute(isActive ? 'data-active' : 'data-default');
-    });
-
-    updateInactiveFlags();
-    applyLanguageState(icon.getAttribute('alt') === 'Greek' ? 'el' : 'en');
-  }
-
-  languageIcons.forEach(icon => {
-    icon.addEventListener('mouseenter', function () {
-      if (!this.classList.contains('active')) {
-        this.src = this.getAttribute('data-active');
-        this.style.filter = 'none';
-      }
-    });
-
-    icon.addEventListener('mouseleave', function () {
-      if (!this.classList.contains('active')) {
-        this.src = this.getAttribute('data-default');
-        updateInactiveFlags();
-      }
-    });
-
-    icon.addEventListener('click', function (event) {
+  languageOptions.forEach(option => {
+    option.addEventListener('click', function (event) {
       event.preventDefault();
       event.stopPropagation();
-      activateLanguage(this);
+      setLanguage(this.dataset.lang);
     });
   });
 
-  window.addEventListener('scroll', updateInactiveFlags);
-
-  if (englishFlag) {
-    activateLanguage(englishFlag);
-  } else {
-    applyLanguageState('en');
-  }
+  setLanguage('en');
 });
 
 // Close menu when clicking outside
@@ -839,6 +823,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     generateTextCarouselPagesAndDots();
     goToTextPage(currentTextPageIndex, false);
+    fitModalText();
   }
 
   // --- Placeholder Project Data (ensure this matches your intended structure) ---
@@ -972,6 +957,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     textCarouselTrack.innerHTML = '';
     textCarouselDotsContainer.innerHTML = '';
+    if (textCarouselPageDisplay) textCarouselPageDisplay.scrollTop = 0;
     pageContent.forEach((pageHTML, index) => {
       const pageElement = document.createElement('div');
       pageElement.classList.add('text-carousel-page');
@@ -983,6 +969,21 @@ document.addEventListener('DOMContentLoaded', () => {
       dot.addEventListener('click', () => goToTextPage(index));
       textCarouselDotsContainer.appendChild(dot);
     });
+  }
+
+  // Desktop: shrink the modal text step by step until all of it fits the
+  // panel (down to a readable minimum; below that the panel scrolls)
+  function fitModalText() {
+    if (!textCarouselPageDisplay) return;
+    const style = textCarouselPageDisplay.style;
+    style.removeProperty('--modal-text-size');
+    if (!currentProjectData || !window.matchMedia('(min-width: 769px)').matches) return;
+
+    const overflows = () => textCarouselPageDisplay.scrollHeight > textCarouselPageDisplay.clientHeight + 1;
+    for (let size = 1.35; overflows() && size > 1.05; ) {
+      size = Math.round((size - 0.05) * 100) / 100;
+      style.setProperty('--modal-text-size', `${size}rem`);
+    }
   }
 
   function changeModalImage() {
@@ -1060,6 +1061,8 @@ document.addEventListener('DOMContentLoaded', () => {
       // Delay positioning until after the DOM update (widths can be 0 on first pass)
       requestAnimationFrame(() => {
         goToTextPage(currentTextPageIndex, false); // Set initial page without animation
+        fitModalText();
+        document.fonts.ready.then(fitModalText); // Re-fit once web fonts have loaded
       });
       startModalImageSlider();
     });
@@ -1103,6 +1106,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function textDragStart(event) {
     if (!currentProjectData) return;
+    // Desktop shows all pages stacked and scrollable, so there is nothing to swipe
+    if (window.matchMedia('(min-width: 769px)').matches) return;
 
     textDragStartPosX = getTextPositionX(event);
     textDragStartPosY = getTextPositionY(event);
@@ -1237,6 +1242,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // For text carousel, readjust position without animation if viewport width changed
       if (textCarouselTrack && currentProjectData) {
         goToTextPage(currentTextPageIndex, false);
+        fitModalText();
       }
     }
   });

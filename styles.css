@@ -284,6 +284,220 @@ body.menu-open {
   margin: 0;
 }
 
+/* "Scroll down" hint: title, three cascading arrows, small note */
+.scroll-hint {
+  position: absolute;
+  right: 32px;
+  bottom: 48px;
+  z-index: 2;
+  width: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+}
+
+.scroll-hint-title {
+  font-family: 'Berlinerins Trial', Arial, sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 2px;
+  line-height: 1.1;
+}
+
+.scroll-hint-arrows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 0 8px;
+}
+
+.scroll-hint-arrows span {
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
+  border-right: 3px solid #ffffff;
+  border-bottom: 3px solid #ffffff;
+  border-radius: 2px;
+  opacity: 0;
+  transform: rotate(45deg);
+  animation: scroll-hint-arrow 1.8s ease-in-out infinite;
+}
+
+.scroll-hint-arrows span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.scroll-hint-arrows span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes scroll-hint-arrow {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px) rotate(45deg);
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(6px) rotate(45deg);
+  }
+}
+
+.scroll-hint-note {
+  font-family: 'Berlinerins Trial', Arial, sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-hint-arrows span {
+    animation: none;
+    opacity: 0.8;
+  }
+}
+
+/* Scroll hint fades in on page load */
+@keyframes scroll-hint-fade-in {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.scroll-hint {
+  animation: scroll-hint-fade-in 1s cubic-bezier(0.22, 1, 0.36, 1) 0.6s both;
+}
+
+/* Set by script.js after scrolling past the intro; stays hidden until reload */
+.scroll-hint.is-dismissed {
+  animation: none;
+  visibility: hidden;
+  opacity: 0;
+}
+
+/* "Change language here" hint: curved arrow pointing up at the language
+   block, small text underneath. Sized to the block's width so the arrow sits
+   under its centre (desktop block: 110 x 44px at top 24px / right 32px). */
+.lang-hint {
+  position: fixed;
+  top: 74px;
+  right: 32px;
+  z-index: 1100;
+  width: 110px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+  /* `backwards` (not `both`) so script.js can set the scroll-fade opacity afterwards */
+  animation: scroll-hint-fade-in 1s cubic-bezier(0.22, 1, 0.36, 1) 1s backwards;
+}
+
+.toolbar > .lang-hint {
+  pointer-events: none;
+}
+
+.lang-hint-arrow {
+  width: 16px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  animation: lang-hint-bob 1.6s ease-in-out infinite;
+}
+
+@keyframes lang-hint-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+
+  50% {
+    translate: 0 -5px;
+  }
+}
+
+/* Right-aligned to the block's edge so it never runs off-screen */
+.lang-hint-text {
+  align-self: flex-end;
+  white-space: nowrap;
+  font-family: 'Berlinerins Trial', Arial, sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.lang-hint.is-dismissed,
+html.nav-open .lang-hint {
+  visibility: hidden;
+}
+
+@media (max-width: 768px) {
+  /* Mobile block: 94 x 38px at top 16px / right 16px */
+  .lang-hint {
+    top: 58px;
+    right: 16px;
+    width: 94px;
+  }
+
+  .lang-hint-arrow {
+    width: 15px;
+    height: 24px;
+  }
+
+  .lang-hint-text {
+    font-size: 0.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lang-hint,
+  .lang-hint-arrow {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-hint {
+    animation: none;
+  }
+}
+
+/* While the hint sits at the side, keep the description clear of it
+   (hint is 160px wide + 32px from the edge, plus a gap) */
+@media (min-width: 1201px) {
+  .hero p {
+    max-width: min(850px, calc(100% - 2 * 220px));
+  }
+}
+
+/* Not enough room beside the text: sit centred below the description */
+@media (max-width: 1200px) {
+  .scroll-hint {
+    position: static;
+    width: 200px;
+    margin: 32px auto 0;
+  }
+}
+
 .hero-name {
   font-family: 'Berlinerins Trial', Arial, sans-serif;
   font-size: clamp(3rem, 10vw, 8rem);
@@ -2709,6 +2923,171 @@ html[lang="el"] .description-title {
   }
 }
 
+/* === Desktop modal: picture on the left, full text on the right ===
+   Reuses the same markup as mobile: .modal-main-content is dissolved so the
+   image, header and text become cells of one grid. The header and text share
+   a background so they read as a single right-hand panel. */
+@media (min-width: 769px) {
+  .modal-content-wrapper {
+    width: min(92vw, 1120px);
+    max-width: none;
+    height: min(82vh, 640px);
+    max-height: none;
+  }
+
+  .modal-left-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    column-gap: 24px;
+    width: 100%;
+    padding: 28px;
+    overflow: hidden;
+  }
+
+  .modal-main-content {
+    display: contents;
+  }
+
+  /* Left: picture */
+  .modal-image-slider-container,
+  .modal-image-slider-container.web-screenshot-frame {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    padding: 16px;
+    border-radius: 18px;
+    background-color: #141414;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.6);
+  }
+
+  #modal-project-image,
+  .modal-image-slider-container.web-screenshot-frame #modal-project-image {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 12px;
+  }
+
+  /* Right: title + text as one panel */
+  .modal-header {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+    padding: 26px 72px 16px 28px;
+    text-align: left;
+    background-color: #262626;
+    border-radius: 18px 18px 0 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  #modal-project-title {
+    font-size: clamp(2rem, 3vw, 2.8rem);
+    line-height: 1.1;
+  }
+
+  .text-carousel-container {
+    grid-column: 2;
+    grid-row: 2;
+    display: block;
+    margin: 0;
+    min-height: 0;
+    background-color: #262626;
+    border-radius: 0 0 18px 18px;
+    overflow: hidden;
+  }
+
+  .text-carousel-arrow {
+    display: none;
+  }
+
+  /* All pages stacked and scrollable instead of paged */
+  .text-carousel-page-display {
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    margin: 0;
+    padding: 20px 20px 24px 28px;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #555 transparent;
+  }
+
+  .text-carousel-page-display::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .text-carousel-page-display::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 10px;
+  }
+
+  .text-carousel-page-display::-webkit-scrollbar-thumb:hover {
+    background: #777;
+  }
+
+  .text-carousel-track {
+    display: block;
+    height: auto;
+    /* Override the inline translateX the paging script sets */
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .text-carousel-page {
+    width: auto;
+    height: auto;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .text-carousel-page + .text-carousel-page {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .text-carousel-page h3 {
+    /* --modal-text-size is lowered by fitModalText() in script.js when needed */
+    font-size: var(--modal-text-size, 1.35rem);
+    line-height: 1.55;
+    letter-spacing: 1px;
+    color: #e6e6e6;
+    margin: 0;
+  }
+
+  /* Close button sits in the panel's top-right corner */
+  .modal-close-btn {
+    top: 40px;
+    left: auto;
+    right: 40px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    font-size: 1.8rem;
+    color: #aaa;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  }
+
+  .modal-close-btn:hover {
+    background: #e06d6d;
+    color: #fff;
+  }
+}
+
 /* === Language Icons === */
 .language-icons {
   position: fixed;
@@ -2721,58 +3100,78 @@ html[lang="el"] .description-title {
   pointer-events: auto;
 }
 
-.lang-icon-box {
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: visible;
+/* One rounded block split in two: English half | Greek half */
+.language-icons {
+  --switch-frame: rgba(255, 255, 255, 0.85);
+  border: 2px solid var(--switch-frame);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.3s ease;
 }
 
-.lang-icon {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  filter: brightness(0) invert(1) contrast(3);
-  transition: transform 0.3s ease;
+/* Darker frame once the toolbar is over the light sections of the page */
+.toolbar.dark-mode .language-icons {
+  --switch-frame: rgba(34, 34, 34, 0.85);
+}
+
+.lang-option {
+  display: block;
+  width: 52px;
+  height: 40px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: #222;
   cursor: pointer;
 }
 
-.lang-icon:hover {
-  transform: scale(1.2);
+.lang-option + .lang-option {
+  border-left: 2px solid var(--switch-frame);
 }
 
-.lang-icon.active {
+/* Only the flag is dimmed, so the frame and divider stay crisp */
+.lang-option svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: grayscale(1) brightness(0.55);
+  transition: filter 0.3s ease;
+}
+
+.lang-option:hover svg,
+.lang-option:focus-visible svg {
+  filter: grayscale(0.3) brightness(0.85);
+}
+
+.lang-option:focus-visible {
+  outline: none;
+}
+
+.lang-option.active svg {
   filter: none;
-  transform: scale(1);
 }
 
-.lang-icon.black {
-  filter: brightness(0) contrast(3);
-}
-
-.lang-icon.black:hover {
-  transform: scale(1.2);
+.lang-option.active {
+  cursor: default;
 }
 
 @media (max-width: 768px) {
   .language-icons {
-    top: 12px;
-    right: 12px;
+    top: 16px;
+    right: 16px;
+    border-radius: 12px;
   }
 
-  .lang-icon-box {
-    width: 50px;
-    height: 50px;
-  }
-
-  .lang-icon {
-    width: 40px;
-    height: 40px;
+  .lang-option {
+    width: 44px;
+    height: 34px;
   }
 }
 
+html[lang="el"] .lang-hint-text,
+html[lang="el"] .scroll-hint-title,
+html[lang="el"] .scroll-hint-note,
 html[lang="el"] .about-btn,
 html[lang="el"] .hero p,
 html[lang="el"] .hero-name,
