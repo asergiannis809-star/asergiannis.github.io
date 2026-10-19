@@ -45,6 +45,8 @@ html {
 
 *, *::before, *::after {
   box-sizing: inherit;
+  /* Remove the blue tap highlight mobile browsers draw on tapped elements */
+  -webkit-tap-highlight-color: transparent;
 }
 
 body.modal-open {
