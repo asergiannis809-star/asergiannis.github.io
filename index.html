@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portfolio - Argiris Sergiannis</title>
-  <link rel="stylesheet" href="styles.css?v=15">
+  <link rel="stylesheet" href="styles.css?v=19">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
     crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -26,6 +26,12 @@
       <a href="#about" data-english="ABOUT" data-greek="ΣΧΕΤΙΚΑ">ABOUT</a>
       <a href="#work" data-english="MY WORK" data-greek="Η ΔΟΥΛΕΙΑ ΜΟΥ">MY WORK</a>
       <a href="#contact" data-english="CONTACT" data-greek="ΕΠΙΚΟΙΝΩΝΙΑ">CONTACT</a>
+      <span class="nav-divider" aria-hidden="true"></span>
+      <a href="assets/Argyris_Sergiannis_CV.pdf" class="cv-link" download
+        data-href-en="assets/Argyris_Sergiannis_CV.pdf" data-href-el="assets/Argyris_Sergiannis_CV_GR.pdf">
+        <i class="fa-solid fa-download" aria-hidden="true"></i>
+        <span data-english="DOWNLOAD CV" data-greek="ΒΙΟΓΡΑΦΙΚΟ">DOWNLOAD CV</span>
+      </a>
     </nav>
     <div class="language-icons" role="group" aria-label="Language">
       <button type="button" class="lang-option active" data-lang="en" aria-label="English" aria-pressed="true">
@@ -144,13 +150,51 @@
     <div id="work"></div>
     <div class="portfolio-content">
       <h2 class="portfolio-title" data-english="MY WORK" data-greek="Η ΔΟΥΛΕΙΑ ΜΟΥ">MY WORK</h2>
+      <!-- Tab switch: shows one group of cards in the carousel at a time -->
+      <div class="portfolio-tabs" role="tablist" aria-label="Portfolio sections" data-active="noteworthy">
+        <span class="portfolio-tab-indicator" aria-hidden="true"></span>
+        <button type="button" class="portfolio-tab active" role="tab" aria-selected="true" data-group="noteworthy">
+          <span data-english="NOTEWORTHY" data-greek="ΑΞΙΟΣΗΜΕΙΩΤΑ">NOTEWORTHY</span>
+        </button>
+        <button type="button" class="portfolio-tab" role="tab" aria-selected="false" data-group="projects">
+          <span data-english="PROJECTS" data-greek="ΕΡΓΑ">PROJECTS</span>
+        </button>
+      </div>
       <div class="portfolio-carousel-layout">
         <div class="portfolio-carousel-container">
           <button class="portfolio-arrow prev" aria-label="Previous project">
             <img src="assets/arrow_left.webp" alt="Previous">
           </button>
           <div class="portfolio-carousel">
-            <div class="portfolio-slide" data-project-index="0">
+            <!-- NOTEWORTHY (placeholders until the real content arrives) -->
+            <div class="portfolio-slide" data-group="noteworthy" data-project-index="4">
+              <div class="portfolio-image-container">
+                <img src="assets/img/thesis-1.webp" alt="Diploma thesis: panic-detection bracelet and companion app" class="portfolio-image-item">
+                <div class="portfolio-text-content overlay">
+                  <h3 class="portfolio-item-title" data-english="Diploma Thesis" data-greek="Διπλωματική">Diploma Thesis</h3>
+                  <p class="portfolio-item-description" data-english="For my diploma thesis at DPSD, University of the Aegean, I designed a wearable bracelet and companion mobile app that detect the onset of a panic attack." data-greek="Στη διπλωματική μου εργασία στο ΤΜΣΠΣ του Πανεπιστημίου Αιγαίου σχεδίασα ένα φορετό βραχιόλι και μια συνοδευτική εφαρμογή κινητού που ανιχνεύουν την έναρξη μιας κρίσης πανικού.">For my diploma thesis at DPSD, University of the Aegean, I designed a wearable bracelet and companion mobile app that detect the onset of a panic attack.</p>
+                </div>
+                <div class="see-more-prompt">
+                  <span class="see-more-text" data-english="SEE MORE..." data-greek="ΔΕΣ ΠΕΡΙΣΣΟΤΕΡΑ...">SEE MORE...</span>
+                </div>
+              </div>
+            </div>
+            <div class="portfolio-slide" data-group="noteworthy" data-project-index="5">
+              <div class="portfolio-image-container">
+                <!-- Portrait photo: crop towards the top so the sensor stays in the 16:9 card -->
+                <img src="assets/img/internship-1.webp" alt="ANASA smart breathing shirt by ATRIDE" class="portfolio-image-item" style="object-position: center 15%;">
+                <div class="portfolio-text-content overlay">
+                  <h3 class="portfolio-item-title" data-english="Internship" data-greek="Πρακτική">Internship</h3>
+                  <p class="portfolio-item-description" data-english="During my internship at ATRIDE, I designed and developed an Android app for ANASA®, the company’s smart breathing shirt that continuously monitors respiratory activity." data-greek="Κατά την πρακτική μου άσκηση στην ATRIDE, σχεδίασα και ανέπτυξα μια εφαρμογή Android για το ANASA®, το έξυπνο μπλουζάκι αναπνοής της εταιρείας που παρακολουθεί συνεχώς τη δραστηριότητα της αναπνοής.">During my internship at ATRIDE, I designed and developed an Android app for ANASA®, the company’s smart breathing shirt that continuously monitors respiratory activity.</p>
+                </div>
+                <div class="see-more-prompt">
+                  <span class="see-more-text" data-english="SEE MORE..." data-greek="ΔΕΣ ΠΕΡΙΣΣΟΤΕΡΑ...">SEE MORE...</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- PROJECTS -->
+            <div class="portfolio-slide" data-group="projects" data-project-index="0">
               <div class="portfolio-image-container">
                 <img src="assets/img/Web_Design_1.webp" alt="Project 1 Image" class="portfolio-image-item">
                 <div class="portfolio-text-content overlay">
@@ -162,7 +206,7 @@
                 </div>
               </div>
             </div>
-            <div class="portfolio-slide" data-project-index="1">
+            <div class="portfolio-slide" data-group="projects" data-project-index="1">
               <div class="portfolio-image-container">
                 <img src="assets/img/App_Design_2.webp" alt="Project 2 Image" class="portfolio-image-item app-screenshot">
                 <div class="portfolio-text-content overlay">
@@ -174,7 +218,7 @@
                 </div>
               </div>
             </div>
-            <div class="portfolio-slide" data-project-index="2">
+            <div class="portfolio-slide" data-group="projects" data-project-index="2">
               <div class="portfolio-image-container">
                 <img src="assets/img/MOCKUP1.webp" alt="Project 3 Image" class="portfolio-image-item">
                 <div class="portfolio-text-content overlay">
@@ -187,7 +231,7 @@
                 </div>
               </div>
             </div>
-            <div class="portfolio-slide" data-project-index="3">
+            <div class="portfolio-slide" data-group="projects" data-project-index="3">
               <div class="portfolio-image-container">
                 <img src="assets/img/emorph.webp" alt="Project 4 Image" class="portfolio-image-item">
                 <div class="portfolio-text-content overlay">
@@ -285,7 +329,7 @@
     </div>
   </footer>
 
-  <script src="script.js?v=8"></script>
+  <script src="script.js?v=14"></script>
 
   <!-- Project Detail Modal -->
   <div id="project-detail-modal" class="project-detail-modal">
@@ -300,6 +344,8 @@
         <div class="modal-main-content">
           <div class="modal-image-slider-container">
             <img src="" alt="Project image" id="modal-project-image" class="modal-project-image">
+            <!-- One dot per image; hover (or tap) a dot to show that image -->
+            <div class="modal-image-dots" role="group" aria-label="Project images"></div>
           </div>
 
           <div class="text-carousel-container">

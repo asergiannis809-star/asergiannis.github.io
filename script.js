@@ -71,6 +71,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     rebuildHeroName(lang);
+
+    // CV download follows the active language
+    document.querySelectorAll('.cv-link').forEach(link => {
+      const href = link.getAttribute(lang === 'el' ? 'data-href-el' : 'data-href-en');
+      if (href) link.setAttribute('href', href);
+    });
+
     document.dispatchEvent(new CustomEvent('app:languagechange', { detail: { lang } }));
   }
 
@@ -543,7 +550,10 @@ if (aboutMeCarousel && aboutMeCarouselRegion && aboutDescriptionP) {
 document.addEventListener('DOMContentLoaded', () => {
   const carouselContainer = document.querySelector('.portfolio-carousel-container'); // Use container for events if needed
   const carousel = document.querySelector('.portfolio-carousel');
-  const slides = document.querySelectorAll('.portfolio-slide');
+  // All cards; `slides` is only the group shown by the active tab (see showGroup)
+  const allSlides = [...document.querySelectorAll('.portfolio-slide')];
+  let slides = allSlides;
+  const portfolioTabs = document.querySelector('.portfolio-tabs');
   const prevBtn = document.querySelector('.portfolio-arrow.prev');
   const nextBtn = document.querySelector('.portfolio-arrow.next');
   const dotsContainer = document.querySelector('.portfolio-dots-container');
@@ -557,7 +567,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   let currentSlideIndex = 0;
-  const totalSlides = slides.length;
   let isDragging = false;
   let startPos = 0;
   let currentTranslate = 0;
@@ -567,19 +576,60 @@ document.addEventListener('DOMContentLoaded', () => {
   // On mobile, carousel should be vertical (swipe up/down). Desktop remains horizontal.
   let isVertical = window.innerWidth <= 768;
 
-  // --- Create Dots --- 
-  for (let i = 0; i < totalSlides; i++) {
-    const dot = document.createElement('button');
-    dot.classList.add('portfolio-dot');
-    dot.setAttribute('aria-label', `Go to project ${i + 1}`);
-    dot.addEventListener('click', () => goToSlide(i));
-    dotsContainer.appendChild(dot);
+  // --- Create Dots (one per card in the active group) ---
+  let dots = [];
+  function buildDots() {
+    dotsContainer.innerHTML = '';
+    slides.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.classList.add('portfolio-dot');
+      dot.setAttribute('aria-label', `Go to project ${i + 1}`);
+      dot.addEventListener('click', () => goToSlide(i));
+      dotsContainer.appendChild(dot);
+    });
+    dots = dotsContainer.querySelectorAll('.portfolio-dot');
   }
-  const dots = dotsContainer.querySelectorAll('.portfolio-dot');
 
-  // --- Go To Slide Function --- 
+  // --- Tabs: show one group of cards, hide the rest, restart at its first card ---
+  function showGroup(group) {
+    const groupSlides = allSlides.filter(slide => slide.dataset.group === group);
+    if (groupSlides.length === 0) return;
+
+    allSlides.forEach(slide => {
+      slide.hidden = slide.dataset.group !== group;
+      slide.classList.remove('active'); // updateUI only touches the visible group
+    });
+    slides = groupSlides;
+    buildDots();
+
+    if (portfolioTabs) {
+      portfolioTabs.dataset.active = group;
+      portfolioTabs.querySelectorAll('.portfolio-tab').forEach(tab => {
+        const isActive = tab.dataset.group === group;
+        tab.classList.toggle('active', isActive);
+        tab.setAttribute('aria-selected', String(isActive));
+      });
+    }
+
+    // Jump to the first card without sliding across from the old position
+    currentSlideIndex = 0;
+    carousel.style.transition = 'none';
+    goToSlide(0);
+    void carousel.offsetWidth; // apply the jump before transitions come back on
+    carousel.style.transition = 'transform 0.5s ease-in-out';
+  }
+
+  if (portfolioTabs) {
+    portfolioTabs.querySelectorAll('.portfolio-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        if (!tab.classList.contains('active')) showGroup(tab.dataset.group);
+      });
+    });
+  }
+
+  // --- Go To Slide Function ---
   function goToSlide(index) {
-    if (index < 0 || index >= totalSlides || isDragging || slides.length === 0) return;
+    if (index < 0 || index >= slides.length || isDragging || slides.length === 0) return;
     cancelAnimationFrame(animationID);
 
     const firstSlide = slides[0];
@@ -626,7 +676,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     prevBtn.disabled = currentSlideIndex === 0;
-    nextBtn.disabled = currentSlideIndex === totalSlides - 1;
+    nextBtn.disabled = currentSlideIndex === slides.length - 1;
   }
 
   // --- Set Slider Position --- 
@@ -694,7 +744,7 @@ document.addEventListener('DOMContentLoaded', () => {
     carousel.style.cursor = 'grab';
 
     // Determine slide change based on drag distance and direction
-    if (movedBy < -threshold && currentSlideIndex < totalSlides - 1) {
+    if (movedBy < -threshold && currentSlideIndex < slides.length - 1) {
       goToSlide(currentSlideIndex + 1);
     } else if (movedBy > threshold && currentSlideIndex > 0) {
       goToSlide(currentSlideIndex - 1);
@@ -726,27 +776,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // --- Initialize --- 
-  updateUI(); // Initial UI state
-
-  // Set initial position without transition
-  const firstSlide = slides[0];
-  const slideStyle = getComputedStyle(firstSlide);
-  const slideOuterSize = isVertical
-    ? firstSlide.offsetHeight + parseFloat(slideStyle.marginTop) + parseFloat(slideStyle.marginBottom)
-    : firstSlide.offsetWidth + parseFloat(slideStyle.marginLeft) + parseFloat(slideStyle.marginRight);
-
-  const containerSize = isVertical ? carouselContainer.offsetHeight : carouselContainer.offsetWidth;
-  const initialOffset = (containerSize - slideOuterSize) / 2;
-
-  currentTranslate = -currentSlideIndex * slideOuterSize + initialOffset;
-
-  carousel.style.transition = 'none';
-  setSliderPosition();
-  // Re-enable transition shortly after for future actions
-  setTimeout(() => {
-    carousel.style.transition = 'transform 0.5s ease-in-out';
-  }, 50);
+  // --- Initialize: start on the tab marked active in the HTML ---
+  const initialTab = portfolioTabs && portfolioTabs.querySelector('.portfolio-tab.active');
+  if (initialTab) {
+    showGroup(initialTab.dataset.group);
+  } else {
+    buildDots();
+    carousel.style.transition = 'none';
+    goToSlide(0);
+    setTimeout(() => { carousel.style.transition = 'transform 0.5s ease-in-out'; }, 50);
+  }
 
   // Portfolio Image Hover Effect
   const portfolioImageContainers = document.querySelectorAll('.portfolio-image-container');
@@ -768,9 +807,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Make each slide tappable/clickable to open the modal
   if (projectDetailModal) {
-    slides.forEach((slide, index) => {
+    allSlides.forEach(slide => {
       slide.addEventListener('click', () => {
-        openProjectModal(index);
+        openProjectModal(parseInt(slide.dataset.projectIndex, 10));
       });
     });
 
@@ -913,6 +952,49 @@ document.addEventListener('DOMContentLoaded', () => {
         "<h3>Έχω επίσης λάβει μέρος σε διαγωνισμούς design, συμπεριλαμβανομένου ενός shoe design challenge όπου η ομάδα μου κατέκτησε την τρίτη θέση στην Ελλάδα.</h3>",
         "<h3>Χρησιμοποιώ CAD και 3D design εργαλεία όπως Blender και Creo Parametric για product development, digital modeling και οπτική διερεύνηση.</h3>"
       ]
+    },
+    // --- NOTEWORTHY (placeholders; indexes 4 and 5 match data-project-index in index.html) ---
+    {
+      title: "Diploma Thesis", mainImage: "assets/img/thesis-1.webp",
+      modalHeader: "Diploma Thesis",
+      modalHeaderEl: "Διπλωματική",
+      modalSliderImages: [
+        "assets/img/thesis-1.webp",
+        "assets/img/thesis-2.webp",
+        "assets/img/thesis-3.webp",
+        "assets/img/thesis-4.webp"
+      ],
+      detailedContentPages: [
+        "<h3>For my diploma thesis at DPSD, University of the Aegean, I designed a wearable bracelet and companion mobile app that detect the onset of a panic attack.</h3>",
+        "<h3>When an episode is detected, the bracelet delivers a discreet haptic intervention to help the user regain control in the moment.</h3>",
+        "<h3>The project followed a human-centred design process, from user research and concept development to prototyping the device and the app experience.</h3>"
+      ],
+      detailedContentPagesEl: [
+        "<h3>Στη διπλωματική μου εργασία στο ΤΜΣΠΣ του Πανεπιστημίου Αιγαίου σχεδίασα ένα φορετό βραχιόλι και μια συνοδευτική εφαρμογή κινητού που ανιχνεύουν την έναρξη μιας κρίσης πανικού.</h3>",
+        "<h3>Όταν εντοπιστεί επεισόδιο, το βραχιόλι παρέχει μια διακριτική απτική (haptic) παρέμβαση που βοηθά τον χρήστη να ανακτήσει τον έλεγχο τη στιγμή που το χρειάζεται.</h3>",
+        "<h3>Η εργασία ακολούθησε ανθρωποκεντρική σχεδιαστική διαδικασία, από την έρευνα χρηστών και την ανάπτυξη της ιδέας έως την πρωτοτυποποίηση της συσκευής και της εφαρμογής.</h3>"
+      ]
+    },
+    {
+      title: "Internship", mainImage: "assets/img/internship-1.webp",
+      modalHeader: "Internship",
+      modalHeaderEl: "Πρακτική",
+      modalSliderImages: [
+        "assets/img/internship-1.webp",
+        "assets/img/internship-2.webp",
+        "assets/img/internship-3.webp",
+        "assets/img/internship-4.webp"
+      ],
+      detailedContentPages: [
+        "<h3>During my internship at ATRIDE, I designed and developed an Android app for ANASA®, the company’s smart breathing shirt that continuously monitors respiratory activity.</h3>",
+        "<h3>I followed a standard design process, from defining requirements and user flows to building the interface in Android Studio.</h3>",
+        "<h3>The app retrieves and works with the respiratory data recorded by the shirts, which is stored in CSV files.</h3>"
+      ],
+      detailedContentPagesEl: [
+        "<h3>Κατά την πρακτική μου άσκηση στην ATRIDE, σχεδίασα και ανέπτυξα μια εφαρμογή Android για το ANASA®, το έξυπνο μπλουζάκι αναπνοής της εταιρείας που παρακολουθεί συνεχώς τη δραστηριότητα της αναπνοής.</h3>",
+        "<h3>Ακολούθησα την καθιερωμένη σχεδιαστική διαδικασία, από τον καθορισμό απαιτήσεων και ροών χρήστη έως την υλοποίηση της διεπαφής στο Android Studio.</h3>",
+        "<h3>Η εφαρμογή ανακτά και αξιοποιεί τα δεδομένα αναπνοής που καταγράφουν τα μπλουζάκια, τα οποία αποθηκεύονται σε αρχεία CSV.</h3>"
+      ]
     }
   ];
 
@@ -986,22 +1068,89 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // --- Image dots: hover (or tap/focus) a dot to peek at that image ---
+  const modalImageDots = projectDetailModal ? projectDetailModal.querySelector('.modal-image-dots') : null;
+  let modalImageFadeTimeout = null;
+  let isPeekingModalImage = false; // pauses the automatic rotation
+
+  function setModalImage(index) {
+    currentModalImageIndex = index;
+    modalMainImage.src = currentProjectData.modalSliderImages[index];
+    modalMainImage.alt = `${currentProjectData.title} image ${index + 1}`;
+    modalMainImage.style.opacity = '1';
+    if (modalImageDots) {
+      modalImageDots.querySelectorAll('.modal-image-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+        dot.setAttribute('aria-pressed', String(i === index));
+      });
+    }
+  }
+
+  function restartModalImageTimer() {
+    if (modalImageSliderInterval) clearInterval(modalImageSliderInterval);
+    modalImageSliderInterval = null;
+    if (currentProjectData && currentProjectData.modalSliderImages && currentProjectData.modalSliderImages.length >= 2) {
+      modalImageSliderInterval = setInterval(changeModalImage, 5000); // 5 seconds
+    }
+  }
+
+  function peekModalImage(index) {
+    if (!currentProjectData) return;
+    isPeekingModalImage = true;
+    clearTimeout(modalImageFadeTimeout); // cancel a fade that's halfway through
+    setModalImage(index);
+  }
+
+  function stopPeekingModalImage() {
+    if (!isPeekingModalImage) return;
+    isPeekingModalImage = false;
+    restartModalImageTimer(); // continue from the peeked image, 5s later
+  }
+
+  function buildModalImageDots() {
+    if (!modalImageDots) return;
+    modalImageDots.innerHTML = '';
+    const images = (currentProjectData && currentProjectData.modalSliderImages) || [];
+    modalImageDots.hidden = images.length < 2;
+    images.forEach((_, i) => {
+      const dot = document.createElement('button');
+      dot.type = 'button';
+      dot.className = 'modal-image-dot';
+      dot.setAttribute('aria-label', `Show image ${i + 1}`);
+      dot.addEventListener('mouseenter', () => peekModalImage(i));
+      dot.addEventListener('focus', () => peekModalImage(i));
+      dot.addEventListener('click', () => peekModalImage(i));
+      modalImageDots.appendChild(dot);
+    });
+  }
+
+  if (modalImageDots) {
+    modalImageDots.addEventListener('mouseleave', stopPeekingModalImage);
+    modalImageDots.addEventListener('focusout', event => {
+      if (!modalImageDots.contains(event.relatedTarget)) stopPeekingModalImage();
+    });
+  }
+
   function changeModalImage() {
     if (!currentProjectData || !modalMainImage || !currentProjectData.modalSliderImages || currentProjectData.modalSliderImages.length < 2) {
       return; // No slider if not enough images
     }
+    if (isPeekingModalImage) return;
 
     modalMainImage.style.opacity = '0'; // Start fade out
 
-    setTimeout(() => {
-      currentModalImageIndex = (currentModalImageIndex + 1) % currentProjectData.modalSliderImages.length;
-      modalMainImage.src = currentProjectData.modalSliderImages[currentModalImageIndex];
-      modalMainImage.alt = `${currentProjectData.title} image ${currentModalImageIndex + 1}`;
-      modalMainImage.style.opacity = '1'; // Start fade in
+    clearTimeout(modalImageFadeTimeout);
+    modalImageFadeTimeout = setTimeout(() => {
+      if (!currentProjectData || isPeekingModalImage) return;
+      setModalImage((currentModalImageIndex + 1) % currentProjectData.modalSliderImages.length);
     }, 750); // Wait for fade out (matches half of 1.5s total, or full 0.7s opacity transition)
   }
 
   function startModalImageSlider() {
+    isPeekingModalImage = false;
+    clearTimeout(modalImageFadeTimeout);
+    buildModalImageDots();
+
     if (!currentProjectData || !currentProjectData.modalSliderImages || currentProjectData.modalSliderImages.length < 2) {
       // If only one image or no images, just ensure the first one is displayed if available
       if (modalMainImage && currentProjectData && currentProjectData.modalSliderImages && currentProjectData.modalSliderImages.length === 1) {
@@ -1017,13 +1166,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Set initial image immediately
-    currentModalImageIndex = 0;
-    modalMainImage.src = currentProjectData.modalSliderImages[currentModalImageIndex];
-    modalMainImage.alt = `${currentProjectData.title} image ${currentModalImageIndex + 1}`;
-    modalMainImage.style.opacity = '1';
-
-    if (modalImageSliderInterval) clearInterval(modalImageSliderInterval); // Clear existing interval
-    modalImageSliderInterval = setInterval(changeModalImage, 5000); // 5 seconds
+    setModalImage(0);
+    restartModalImageTimer();
   }
 
   function openProjectModal(projectIndex) {
@@ -1077,6 +1221,8 @@ document.addEventListener('DOMContentLoaded', () => {
     currentProjectData = null;
     if (modalImageSliderInterval) clearInterval(modalImageSliderInterval);
     modalImageSliderInterval = null;
+    clearTimeout(modalImageFadeTimeout);
+    isPeekingModalImage = false;
     currentModalImageIndex = 0;
     if (isTextDragging) { // Reset drag state if modal is closed mid-drag
       isTextDragging = false;

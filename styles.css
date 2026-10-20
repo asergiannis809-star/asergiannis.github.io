@@ -445,12 +445,16 @@ body.menu-open {
   color: rgba(255, 255, 255, 0.85);
 }
 
-.lang-hint.is-dismissed,
-html.nav-open .lang-hint {
+.lang-hint.is-dismissed {
   visibility: hidden;
 }
 
 @media (max-width: 768px) {
+  /* The full-width phone menu would cover it */
+  html.nav-open .lang-hint {
+    visibility: hidden;
+  }
+
   /* Mobile block: 94 x 38px at top 16px / right 16px */
   .lang-hint {
     top: 58px;
@@ -612,6 +616,107 @@ html.nav-open .lang-hint {
 
 .toolbar-menu.show a:nth-child(4) {
   transition-delay: 0.55s, 0.55s, 0s, 0s, 0s;
+}
+
+/* Divider + "Download CV" at the end of the menu (divider is child 5, CV link child 6) */
+.nav-divider {
+  flex: none;
+  width: 2px;
+  height: 1.6em;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  /* match the links so the line is as tall as their text */
+  border-radius: 1px;
+  background: currentColor;
+  color: #ffffff;
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(.4, 0, .2, 1);
+}
+
+.toolbar-menu.show .nav-divider {
+  opacity: 0.6;
+  transition-delay: 0.7s;
+}
+
+.toolbar-menu.show a:nth-child(6) {
+  transition-delay: 0.8s, 0.8s, 0s, 0s, 0s;
+}
+
+.toolbar.dark-mode .nav-divider {
+  color: #222222;
+}
+
+/* Keep each menu item on one line; tighten the gaps instead */
+.toolbar-menu {
+  gap: clamp(16px, 2.4vw, 40px);
+}
+
+.toolbar-menu a {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Desktop row: size the text so all items fit between the hamburger and the
+   language block (Greek display font is wider, so it gets a smaller size) */
+@media (min-width: 769px) {
+  .toolbar .toolbar-menu a,
+  .toolbar .nav-divider {
+    font-size: clamp(1rem, 2.4vw, 2.5rem);
+  }
+
+  html[lang="el"] .toolbar .toolbar-menu a,
+  html[lang="el"] .toolbar .nav-divider {
+    font-size: clamp(0.8rem, 1.75vw, 2.2rem);
+  }
+}
+
+/* Tablet widths: tighter still */
+@media (min-width: 769px) and (max-width: 1000px) {
+  .toolbar .toolbar-menu {
+    gap: 10px;
+  }
+
+  .toolbar .toolbar-menu a {
+    padding: 8px 8px;
+  }
+
+  .toolbar .toolbar-menu a,
+  .toolbar .nav-divider {
+    font-size: 2.4vw;
+  }
+
+  html[lang="el"] .toolbar .toolbar-menu a,
+  html[lang="el"] .toolbar .nav-divider {
+    font-size: 1.8vw;
+  }
+}
+
+.cv-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  white-space: nowrap;
+}
+
+.cv-link i {
+  font-size: 0.75em;
+}
+
+@media (max-width: 768px) {
+  /* Stacked menu: the divider becomes a short horizontal line */
+  .nav-divider {
+    width: 60%;
+    height: 1px;
+    margin: 6px auto;
+    font-size: inherit;
+  }
+
+  .toolbar.dark-mode .nav-divider {
+    color: #ffffff;
+  }
+
+  .cv-link {
+    justify-content: center;
+  }
 }
 
 /* Optional: Hide hamburger when menu is open and show X instead (Removed) */
@@ -1282,6 +1387,82 @@ html[lang="el"] .description-title {
   text-align: center;
   margin-bottom: 60px;
   letter-spacing: 0.1em;
+}
+
+/* NOTEWORTHY | PROJECTS switch: two equal tabs in a pill, with a pink
+   highlight that slides under the active one */
+.portfolio-tabs {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 6px;
+  margin: -24px auto 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.portfolio-tab-indicator {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 6px;
+  width: calc(50% - 6px);
+  border-radius: 999px;
+  background: #e06d6d;
+  box-shadow: 0 4px 12px rgba(224, 109, 109, 0.35);
+  transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.portfolio-tabs[data-active="projects"] .portfolio-tab-indicator {
+  transform: translateX(100%);
+}
+
+.portfolio-tab {
+  position: relative;
+  /* above the indicator */
+  z-index: 1;
+  padding: 12px 32px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  font-family: 'Berlinerins Trial', Arial, sans-serif;
+  font-size: 1.3rem;
+  letter-spacing: 0.08em;
+  color: #222;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.portfolio-tab:hover {
+  color: #e06d6d;
+}
+
+.portfolio-tab.active {
+  color: #ffffff;
+  cursor: default;
+}
+
+.portfolio-tab:focus-visible {
+  outline: 2px solid #e06d6d;
+  outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+  .portfolio-tab {
+    padding: 10px 18px;
+    font-size: 1.05rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-tab-indicator {
+    transition: none;
+  }
 }
 
 /* === Portfolio Carousel Styles === */
@@ -2667,6 +2848,55 @@ html[lang="el"] .description-title {
   background-color: #ffffff;
 }
 
+/* Image dots at the bottom of the image frame (hover/tap to peek) */
+.modal-image-slider-container {
+  position: relative;
+}
+
+.modal-image-dots {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  translate: -50% 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* 10px dot drawn inside a larger, easier-to-hit button */
+.modal-image-dot {
+  box-sizing: content-box;
+  width: 10px;
+  height: 10px;
+  padding: 6px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
+  background-clip: content-box;
+  cursor: pointer;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.modal-image-dot:hover {
+  background-color: rgba(255, 255, 255, 0.85);
+}
+
+.modal-image-dot.active {
+  width: 26px;
+  background-color: #e06d6d;
+}
+
+.modal-image-dot:focus-visible {
+  outline: 2px solid #e06d6d;
+  outline-offset: -2px;
+}
+
 /* Styles for Text Carousel in Modal */
 .text-carousel-container {
   display: flex;
@@ -3169,6 +3399,7 @@ html[lang="el"] .description-title {
   }
 }
 
+html[lang="el"] .portfolio-tab,
 html[lang="el"] .lang-hint-text,
 html[lang="el"] .scroll-hint-title,
 html[lang="el"] .scroll-hint-note,
