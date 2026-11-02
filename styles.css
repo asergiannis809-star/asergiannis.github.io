@@ -248,22 +248,6 @@ body.menu-open {
   overflow: visible;
 }
 
-.hero p {
-  font-family: 'Berlinerins Trial', sans-serif;
-  font-size: clamp(1.2rem, 2.2vw, 2.2rem);
-  font-weight: normal;
-  text-transform: uppercase;
-  margin: 0 auto;
-  color: #ffffff;
-  max-width: 850px;
-  padding: 0 12px;
-  text-align: center;
-  line-height: 1.5;
-  letter-spacing: 1px;
-  position: relative;
-  z-index: 2;
-}
-
 /* Stacked hero: name, then button, then description */
 .hero-header {
   display: flex;
@@ -482,14 +466,6 @@ body.menu-open {
 @media (prefers-reduced-motion: reduce) {
   .scroll-hint {
     animation: none;
-  }
-}
-
-/* While the hint sits at the side, keep the description clear of it
-   (hint is 160px wide + 32px from the edge, plus a gap) */
-@media (min-width: 1201px) {
-  .hero p {
-    max-width: min(850px, calc(100% - 2 * 220px));
   }
 }
 
@@ -780,12 +756,6 @@ body.menu-open {
     width: 100%;
   }
 
-  .hero p {
-    font-size: 3vw;
-    max-width: 90vw;
-    padding: 0;
-  }
-
   .about-btn {
     font-size: 3.5vw;
     min-width: 60px;
@@ -942,13 +912,6 @@ body.menu-open {
     font-size: 12vw;
     text-align: center;
     width: 100%;
-  }
-
-  .hero p {
-    font-size: 4.5vw;
-    /* Larger, more readable on phones */
-    max-width: 100%;
-    padding: 0;
   }
 
   .about-btn {
@@ -1146,6 +1109,34 @@ body.menu-open {
   }
 }
 
+/* One pane per About tab; only the active one is shown */
+.about-pane {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: inherit;
+  width: 100%;
+}
+
+.about-pane[hidden] {
+  display: none;
+}
+
+/* Fade the panel's content while the About tabs swap panes (see script.js) */
+.about-panel > .about-pane {
+  transition: opacity 0.25s ease;
+}
+
+.about-panel.about-fading > .about-pane {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-panel > .about-pane {
+    transition: none;
+  }
+}
+
 .about-description {
   text-align: center;
   display: flex;
@@ -1236,7 +1227,8 @@ html[lang="el"] .description-title {
   /* Center divider and add space below */
 }
 
-.about-description p {
+.about-description p,
+.about-intro p {
   font-family: 'Berlinerins Trial', Arial, sans-serif;
   font-size: 1.6rem;
   font-weight: normal;
@@ -1298,7 +1290,8 @@ html[lang="el"] .description-title {
     margin-bottom: 32px;
   }
 
-  .about-description p {
+  .about-description p,
+  .about-intro p {
     font-size: 1.5rem;
     max-width: 600px;
   }
@@ -1330,7 +1323,8 @@ html[lang="el"] .description-title {
     margin-bottom: 24px;
   }
 
-  .about-description p {
+  .about-description p,
+  .about-intro p {
     font-size: 1.2rem;
     padding: 0 12px;
   }
@@ -1418,6 +1412,15 @@ html[lang="el"] .description-title {
 }
 
 .portfolio-tabs[data-active="projects"] .portfolio-tab-indicator {
+  transform: translateX(100%);
+}
+
+/* Same switch in the About section (WHO AM I | I WORK ON) */
+.about-tabs {
+  margin: 0 auto;
+}
+
+.about-tabs[data-active="work-on"] .portfolio-tab-indicator {
   transform: translateX(100%);
 }
 
@@ -1932,6 +1935,25 @@ html[lang="el"] .description-title {
   .portfolio-arrow img {
     width: 25px;
     height: 25px;
+  }
+}
+
+/* --- Tab switch fade (NOTEWORTHY <-> PROJECTS); duration matches TAB_FADE_MS in script.js --- */
+.portfolio-carousel-layout,
+.portfolio-dots-container {
+  transition: opacity 0.25s ease;
+}
+
+.portfolio-carousel-layout.portfolio-fading,
+.portfolio-dots-container.portfolio-fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-carousel-layout,
+  .portfolio-dots-container {
+    transition: none;
   }
 }
 
@@ -3404,13 +3426,13 @@ html[lang="el"] .lang-hint-text,
 html[lang="el"] .scroll-hint-title,
 html[lang="el"] .scroll-hint-note,
 html[lang="el"] .about-btn,
-html[lang="el"] .hero p,
 html[lang="el"] .hero-name,
 html[lang="el"] .toolbar-menu a,
 html[lang="el"] .about-paragraph,
 html[lang="el"] .about-me-header .about-me-name,
 html[lang="el"] .description-title,
 html[lang="el"] .about-description p,
+html[lang="el"] .about-intro p,
 html[lang="el"] .my-work-btn,
 html[lang="el"] .portfolio-title,
 html[lang="el"] .portfolio-item-title,

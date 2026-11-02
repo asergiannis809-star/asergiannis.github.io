@@ -81,26 +81,55 @@ document.addEventListener('DOMContentLoaded', function () {
     document.dispatchEvent(new CustomEvent('app:languagechange', { detail: { lang } }));
   }
 
+  // Language switch fade: translated text fades out, swaps, fades back in.
+  // Uses element.animate so it doesn't override the elements' own CSS transitions.
+  const LANG_FADE_MS = 200;
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let langSwitchToken = 0;
+
+  function fadeSwapLanguage(lang) {
+    const targets = [...document.querySelectorAll('[data-greek][data-english]')];
+    const token = ++langSwitchToken;
+    const timing = { duration: LANG_FADE_MS, easing: 'ease' };
+
+    // Single keyframe = animate from/to the element's own opacity, so hidden overlays stay hidden
+    const fadeOuts = targets.map(el => el.animate([{ opacity: 0 }], { ...timing, fill: 'forwards' }));
+
+    Promise.all(fadeOuts.map(a => a.finished)).then(() => {
+      if (token === langSwitchToken) {
+        applyLanguageState(lang);
+        targets.forEach(el => el.animate([{ opacity: 0 }], { ...timing, direction: 'reverse' }));
+      }
+      // Drop the held opacity: 0 (the fade-in, or a newer fade-out, now sits on top)
+      fadeOuts.forEach(a => a.cancel());
+    }).catch(() => { });
+  }
+
   // Split flag switch: each half is a button; the active half shows in full colour
-  function setLanguage(lang) {
+  function setLanguage(lang, { animate = true } = {}) {
     languageOptions.forEach(option => {
       const isActive = option.dataset.lang === lang;
       option.classList.toggle('active', isActive);
       option.setAttribute('aria-pressed', String(isActive));
     });
 
-    applyLanguageState(lang);
+    if (!animate || reduceMotion.matches || !Element.prototype.animate) {
+      applyLanguageState(lang);
+      return;
+    }
+    fadeSwapLanguage(lang);
   }
 
   languageOptions.forEach(option => {
     option.addEventListener('click', function (event) {
       event.preventDefault();
       event.stopPropagation();
+      if (this.classList.contains('active')) return;
       setLanguage(this.dataset.lang);
     });
   });
 
-  setLanguage('en');
+  setLanguage('en', { animate: false });
 });
 
 // Close menu when clicking outside
@@ -150,103 +179,6 @@ let ignoreScroll = false;
 mainContent.classList.add('fade');
 aboutMe.classList.add('fade');
 
-// Show About section, hide main content with fade
-function showAbout() {
-  const aboutMeSection = document.getElementById('about-me');
-  if (aboutMeSection) {
-    ignoreScroll = true; // Prevent scroll listener interference
-    smoothScrollTo(aboutMeSection, 900);
-    // Let the scroll listener handle the fade naturally during scroll
-    // Ensure final state after scroll completes
-    setTimeout(() => {
-      aboutMeSection.style.opacity = '1';
-      aboutMeSection.style.pointerEvents = 'auto';
-      aboutMeSection.style.zIndex = '2';
-      const mainContent = document.getElementById('main-content');
-      if (mainContent) {
-        mainContent.style.opacity = '0';
-        mainContent.style.pointerEvents = 'none';
-        mainContent.style.zIndex = '1';
-      }
-      ignoreScroll = false;
-    }, 950); // Slightly longer than scroll duration
-  }
-}
-
-// Show main content, hide About section with fade
-function showMain() {
-  const mainContentSection = document.getElementById('main-content');
-  if (mainContentSection) {
-    ignoreScroll = true; // Prevent scroll listener interference
-    smoothScrollTo(mainContentSection, 900);
-    // Let the scroll listener handle the fade naturally during scroll
-    // Ensure final state after scroll completes
-    setTimeout(() => {
-      mainContentSection.style.opacity = '1';
-      mainContentSection.style.pointerEvents = 'auto';
-      mainContentSection.style.zIndex = '2';
-      const aboutMe = document.getElementById('about-me');
-      if (aboutMe) {
-        aboutMe.style.opacity = '0';
-        aboutMe.style.pointerEvents = 'none';
-        aboutMe.style.zIndex = '1';
-      }
-      ignoreScroll = false;
-    }, 950); // Slightly longer than scroll duration
-  }
-}
-
-// Attach to nav and button
-document.querySelectorAll('a[href="#about"]').forEach(link => {
-  link.addEventListener('click', function (e) {
-    e.preventDefault();
-
-    // Add a slight delay specifically so button click visual effects (like our splash) can render
-    setTimeout(() => {
-      showAbout();
-      // Wait for the fade-in to start, then scroll to about section
-      setTimeout(() => {
-        smoothScrollTo(document.getElementById('about-me'), 900); // 900ms for a nice effect
-      }, 510);
-    }, 300);
-  });
-});
-
-// Optionally, add a "Back" button in the about section:
-/*
-const backBtn = document.createElement('button');
-backBtn.textContent = "Back";
-backBtn.style = "margin-top: 32px; font-size: 1.2rem; padding: 10px 24px; border-radius: 12px; border: none; background: #e06d6d; color: #fff; cursor: pointer;";
-
-let ignoreScroll = false;
-let aboutShownByScroll = false;
-let lastScrollY = window.scrollY;
-
-backBtn.onclick = function() {
-  ignoreScroll = true;
-  showMain();
-  setTimeout(() => {
-    smoothScrollTo(document.getElementById('main-content'), 900);
-    setTimeout(() => { ignoreScroll = false; }, 950);
-  }, 500);
-};
-
-document.querySelector('#about-me .about-me-content').appendChild(backBtn);
-*/
-
-// Attach to the HOME nav item
-document.querySelectorAll('a[href="#hero"]').forEach(link => {
-  link.addEventListener('click', function (e) {
-    e.preventDefault();
-    ignoreScroll = true;
-    showMain();
-    setTimeout(() => {
-      smoothScrollTo(document.getElementById('main-content'), 900);
-      setTimeout(() => { ignoreScroll = false; }, 950);
-    }, 500);
-  });
-});
-
 function smoothScrollTo(target, duration = 800) {
   const start = window.scrollY;
   const end = typeof target === 'number'
@@ -273,35 +205,102 @@ function smoothScrollTo(target, duration = 800) {
   requestAnimationFrame(animateScroll);
 }
 
-// Initialize sections
-document.addEventListener('DOMContentLoaded', function () {
-  const mainContent = document.getElementById('main-content');
-  const aboutMe = document.getElementById('about-me');
-  if (mainContent) mainContent.style.opacity = '1';
-  if (aboutMe) aboutMe.style.opacity = '0'; // Ensure about starts faded out
-  if (aboutMe) aboutMe.style.pointerEvents = 'none';
-  if (mainContent) mainContent.style.zIndex = '2';
-  if (aboutMe) aboutMe.style.zIndex = '1';
+// === Page sections: scroll fades, toolbar colour and in-page links ===
+// Everything follows the order of the [data-section] elements in index.html,
+// so sections can be reordered there without touching this code.
+// [data-light] marks a light background: the toolbar switches to dark icons over it.
+const pageSections = [...document.querySelectorAll('[data-section]')];
 
-  // Evaluate toolbar coloring on scroll
-  const toolbar = document.querySelector('.toolbar');
-  const portfolioSection = document.getElementById('portfolio');
+// Links that scroll to a section (nav menu, buttons, back-to-top)
+const SECTION_LINKS = {
+  '#hero': 'main-content',
+  '#work': 'portfolio',
+  '#about': 'about-me',
+  '#contact': 'contact'
+};
 
-  window.addEventListener('scroll', () => {
-    if (!toolbar || !portfolioSection) return;
-    // Get the top position of the portfolio section relative to the viewport
-    const portfolioTop = portfolioSection.getBoundingClientRect().top;
+// Make one section the visible, clickable, top-most one
+function setActiveSection(active) {
+  pageSections.forEach(section => {
+    const isActive = section === active;
+    section.style.opacity = isActive ? '1' : '0';
+    section.style.pointerEvents = isActive ? 'auto' : 'none';
+    section.style.zIndex = isActive ? '4' : '1';
+  });
+}
 
-    // If the top of the portfolio section hits the toolbar (which is e.g. 100px tall), switch to dark mode
-    if (portfolioTop <= 80) {
-      toolbar.classList.add('dark-mode');
-    } else {
-      toolbar.classList.remove('dark-mode');
-    }
+// Cross-fade neighbouring sections as each one scrolls out of view
+function updateSectionFades() {
+  if (ignoreScroll || pageSections.length === 0) return;
+
+  const fadeStart = window.innerHeight * 0.8;
+  const fadeEnd = window.innerHeight * 0.2;
+  // How far each section has scrolled away: 0 = still in view, 1 = gone
+  const progress = pageSections.map(section => {
+    const bottom = section.getBoundingClientRect().bottom;
+    return Math.max(0, Math.min(1, (fadeStart - bottom) / (fadeStart - fadeEnd)));
   });
 
-  // Trigger a scroll event on load to fix the blank screen bug on refresh
-  // This evaluates the current scroll position and makes the correct sections visible
+  // The active section is the furthest one whose predecessor is mostly gone
+  let activeIndex = 0;
+  for (let i = 1; i < pageSections.length; i++) {
+    if (progress[i - 1] > 0.5) activeIndex = i;
+  }
+
+  const last = pageSections.length - 1;
+  pageSections.forEach((section, i) => {
+    const fadeIn = i === 0 ? 1 : progress[i - 1];  // first section starts visible
+    const fadeOut = i === last ? 0 : progress[i];  // last section never fades out
+    section.style.opacity = fadeIn * (1 - fadeOut);
+
+    const isActive = i === activeIndex;
+    section.style.pointerEvents = isActive ? 'auto' : 'none';
+    section.style.zIndex = isActive ? '4' : '1';
+  });
+}
+
+// Dark toolbar icons while a light section is under the toolbar
+function updateToolbarColour() {
+  const toolbar = document.querySelector('.toolbar');
+  if (!toolbar) return;
+  const toolbarEdge = 80; // roughly the toolbar's height
+  const underToolbar = pageSections.find(section => {
+    const rect = section.getBoundingClientRect();
+    return rect.top <= toolbarEdge && rect.bottom > toolbarEdge;
+  });
+  toolbar.classList.toggle('dark-mode', !!(underToolbar && underToolbar.hasAttribute('data-light')));
+}
+
+// Scroll to a section, then settle the fades on it
+function scrollToSection(sectionId) {
+  const section = document.getElementById(sectionId);
+  if (!section) return;
+  ignoreScroll = true; // keep the scroll fades from fighting the animation
+  smoothScrollTo(section, 900);
+  setTimeout(() => {
+    setActiveSection(section);
+    updateToolbarColour();
+    ignoreScroll = false;
+  }, 950); // scroll duration + buffer
+}
+
+window.addEventListener('scroll', updateSectionFades);
+window.addEventListener('scroll', updateToolbarColour);
+
+document.querySelectorAll('a[href]').forEach(link => {
+  const sectionId = SECTION_LINKS[link.getAttribute('href')];
+  if (!sectionId) return;
+  link.addEventListener('click', event => {
+    event.preventDefault();
+    // Buttons get a moment to show their splash effect before the page moves
+    const delay = link.classList.contains('about-btn') ? 300 : 0;
+    setTimeout(() => scrollToSection(sectionId), delay);
+  });
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+  if (pageSections.length) setActiveSection(pageSections[0]);
+  // Re-evaluate once layout settles (fixes a blank screen when refreshing mid-page)
   setTimeout(() => window.dispatchEvent(new Event('scroll')), 50);
 });
 
@@ -544,6 +543,38 @@ if (aboutMeCarousel && aboutMeCarouselRegion && aboutDescriptionP) {
   console.warn("About Me carousel elements not found. Vertical carousel inactive.");
 }
 
+// === ABOUT ME TABS (WHO AM I | I WORK ON) ===
+// Same fade as the MY WORK tabs: highlight the tab, fade the panel out, swap panes, fade in
+const aboutTabs = document.querySelector('.about-tabs');
+const aboutPanel = document.querySelector('.about-panel');
+
+if (aboutTabs && aboutPanel) {
+  const ABOUT_FADE_MS = 250; // keep in sync with .about-fading in styles.css
+  let aboutFadeTimer = 0;
+
+  aboutTabs.querySelectorAll('.portfolio-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      if (tab.classList.contains('active')) return;
+      const pane = tab.dataset.pane;
+
+      aboutTabs.querySelectorAll('.portfolio-tab').forEach(t => {
+        t.classList.toggle('active', t === tab);
+        t.setAttribute('aria-selected', String(t === tab));
+      });
+      aboutTabs.dataset.active = pane;
+
+      clearTimeout(aboutFadeTimer);
+      aboutPanel.classList.add('about-fading');
+      aboutFadeTimer = setTimeout(() => {
+        aboutPanel.querySelectorAll('.about-pane').forEach(el => {
+          el.hidden = el.dataset.pane !== pane;
+        });
+        aboutPanel.classList.remove('about-fading');
+      }, ABOUT_FADE_MS);
+    });
+  });
+}
+
 // === END OF ABOUT ME VERTICAL CAROUSEL ===
 
 // === Portfolio Carousel Logic ===
@@ -553,7 +584,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // All cards; `slides` is only the group shown by the active tab (see showGroup)
   const allSlides = [...document.querySelectorAll('.portfolio-slide')];
   let slides = allSlides;
-  const portfolioTabs = document.querySelector('.portfolio-tabs');
+  const portfolioTabs = document.querySelector('.portfolio-section .portfolio-tabs');
   const prevBtn = document.querySelector('.portfolio-arrow.prev');
   const nextBtn = document.querySelector('.portfolio-arrow.next');
   const dotsContainer = document.querySelector('.portfolio-dots-container');
@@ -619,10 +650,30 @@ document.addEventListener('DOMContentLoaded', () => {
     carousel.style.transition = 'transform 0.5s ease-in-out';
   }
 
+  // Tab switch: fade the cards and dots out, swap the group while hidden, fade back in
+  const fadeTargets = [document.querySelector('.portfolio-carousel-layout'), dotsContainer].filter(Boolean);
+  const TAB_FADE_MS = 250; // keep in sync with .portfolio-fading in styles.css
+  let tabFadeTimer = 0;
+
   if (portfolioTabs) {
     portfolioTabs.querySelectorAll('.portfolio-tab').forEach(tab => {
       tab.addEventListener('click', () => {
-        if (!tab.classList.contains('active')) showGroup(tab.dataset.group);
+        if (tab.classList.contains('active')) return;
+        const group = tab.dataset.group;
+
+        // Highlight the clicked tab right away; the cards follow after the fade-out
+        portfolioTabs.querySelectorAll('.portfolio-tab').forEach(t => {
+          t.classList.toggle('active', t === tab);
+          t.setAttribute('aria-selected', String(t === tab));
+        });
+        portfolioTabs.dataset.active = group;
+
+        clearTimeout(tabFadeTimer);
+        fadeTargets.forEach(el => el.classList.add('portfolio-fading'));
+        tabFadeTimer = setTimeout(() => {
+          showGroup(group);
+          fadeTargets.forEach(el => el.classList.remove('portfolio-fading'));
+        }, TAB_FADE_MS);
       });
     });
   }
@@ -1559,231 +1610,6 @@ setTimeout(function() {
   });
 }, 500);
 
-// Scroll-based fade between Sections
-window.addEventListener('scroll', function () {
-  if (ignoreScroll) return;
-
-  const mainContent = document.getElementById('main-content');
-  const aboutMe = document.getElementById('about-me');
-  const portfolioSection = document.getElementById('portfolio');
-  const contactSection = document.getElementById('contact'); // Get contact section
-
-  if (!mainContent || !aboutMe || !portfolioSection || !contactSection) return; // Check contact section
-
-  const mainRect = mainContent.getBoundingClientRect();
-  const aboutRect = aboutMe.getBoundingClientRect();
-  const portfolioRect = portfolioSection.getBoundingClientRect(); // Get portfolio rect
-  const windowHeight = window.innerHeight;
-
-  // --- Transition 1: Main Content -> About Me --- 
-  const fade1Start = windowHeight * 0.8;
-  const fade1End = windowHeight * 0.2;
-  let progress1 = 0;
-  if (mainRect.bottom < fade1Start) {
-    progress1 = Math.min(1, (fade1Start - mainRect.bottom) / (fade1Start - fade1End));
-  }
-  progress1 = Math.max(0, progress1);
-
-  // --- Transition 2: About Me -> Portfolio --- 
-  const fade2Start = windowHeight * 0.8;
-  const fade2End = windowHeight * 0.2;
-  let progress2 = 0;
-  if (aboutRect.bottom < fade2Start) {
-    progress2 = Math.min(1, (fade2Start - aboutRect.bottom) / (fade2Start - fade2End));
-  }
-  progress2 = Math.max(0, progress2);
-
-  // --- Transition 3: Portfolio -> Contact --- 
-  const fade3Start = windowHeight * 0.8;
-  const fade3End = windowHeight * 0.2;
-  let progress3 = 0;
-  if (portfolioRect.bottom < fade3Start) {
-    progress3 = Math.min(1, (fade3Start - portfolioRect.bottom) / (fade3Start - fade3End));
-  }
-  progress3 = Math.max(0, progress3);
-
-  // Apply Opacity based on transitions
-  mainContent.style.opacity = 1 - progress1;
-  aboutMe.style.opacity = progress1 * (1 - progress2); // Fade in then out
-  portfolioSection.style.opacity = progress2 * (1 - progress3); // Fade in then out
-  contactSection.style.opacity = progress3; // Fade in
-
-  // Update Pointer Events & Z-Index
-  if (progress3 > 0.5) { // Contact is dominant
-    mainContent.style.pointerEvents = 'none';
-    aboutMe.style.pointerEvents = 'none';
-    portfolioSection.style.pointerEvents = 'none';
-    contactSection.style.pointerEvents = 'auto';
-    mainContent.style.zIndex = '1';
-    aboutMe.style.zIndex = '2';
-    portfolioSection.style.zIndex = '3';
-    contactSection.style.zIndex = '4';
-  } else if (progress2 > 0.5) { // Portfolio is dominant
-    mainContent.style.pointerEvents = 'none';
-    aboutMe.style.pointerEvents = 'none';
-    portfolioSection.style.pointerEvents = 'auto';
-    contactSection.style.pointerEvents = 'none';
-    mainContent.style.zIndex = '1';
-    aboutMe.style.zIndex = '2';
-    portfolioSection.style.zIndex = '4'; // Highest when active
-    contactSection.style.zIndex = '3';
-  } else if (progress1 > 0.5) { // About Me is dominant
-    mainContent.style.pointerEvents = 'none';
-    aboutMe.style.pointerEvents = 'auto';
-    portfolioSection.style.pointerEvents = 'none';
-    contactSection.style.pointerEvents = 'none';
-    mainContent.style.zIndex = '1';
-    aboutMe.style.zIndex = '4'; // Highest when active
-    portfolioSection.style.zIndex = '3';
-    contactSection.style.zIndex = '2';
-  } else { // Main Content is dominant
-    mainContent.style.pointerEvents = 'auto';
-    aboutMe.style.pointerEvents = 'none';
-    portfolioSection.style.pointerEvents = 'none';
-    contactSection.style.pointerEvents = 'none';
-    mainContent.style.zIndex = '4'; // Highest when active
-    aboutMe.style.zIndex = '3';
-    portfolioSection.style.zIndex = '2';
-    contactSection.style.zIndex = '1';
-  }
-});
-
-// Adjust showAbout, showMain, and MyWorkBtn click to primarily handle scrolling
-
-function scrollToSection(sectionId) {
-  const section = document.getElementById(sectionId);
-  if (section) {
-    ignoreScroll = true; // Prevent scroll listener interference during animation
-    smoothScrollTo(section, 900);
-    // The scroll listener will handle the fade
-    // We set the final state after the scroll animation
-    setTimeout(() => {
-      const mainContent = document.getElementById('main-content');
-      const aboutMe = document.getElementById('about-me');
-      const portfolioSection = document.getElementById('portfolio');
-      const contactSection = document.getElementById('contact'); // Get contact section
-
-      if (mainContent && aboutMe && portfolioSection && contactSection) {
-        mainContent.style.opacity = sectionId === 'main-content' ? '1' : '0';
-        aboutMe.style.opacity = sectionId === 'about-me' ? '1' : '0';
-        portfolioSection.style.opacity = sectionId === 'portfolio' ? '1' : '0';
-        contactSection.style.opacity = sectionId === 'contact' ? '1' : '0'; // Set contact opacity
-
-        mainContent.style.pointerEvents = sectionId === 'main-content' ? 'auto' : 'none';
-        aboutMe.style.pointerEvents = sectionId === 'about-me' ? 'auto' : 'none';
-        portfolioSection.style.pointerEvents = sectionId === 'portfolio' ? 'auto' : 'none';
-        contactSection.style.pointerEvents = sectionId === 'contact' ? 'auto' : 'none'; // Set contact pointer-events
-
-        // Simplified Z-Index logic: Target section highest, others lower
-        mainContent.style.zIndex = sectionId === 'main-content' ? '4' : '1';
-        aboutMe.style.zIndex = sectionId === 'about-me' ? '4' : '1';
-        portfolioSection.style.zIndex = sectionId === 'portfolio' ? '4' : '1';
-        contactSection.style.zIndex = sectionId === 'contact' ? '4' : '1';
-      }
-      ignoreScroll = false;
-    }, 950); // Match scroll duration + buffer
-  }
-}
-
-function showAbout() {
-  scrollToSection('about-me');
-}
-
-function showMain() {
-  scrollToSection('main-content');
-}
-
-// Update MY WORK button listener to use scrollToSection
-document.addEventListener('DOMContentLoaded', function () {
-  const myWorkBtn = document.querySelector('.my-work-btn');
-  if (myWorkBtn) {
-    myWorkBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      scrollToSection('portfolio');
-    });
-  }
-
-  // Toolbar link for MY WORK
-  const workNavLink = document.querySelector('.toolbar-menu a[href="#work"]');
-  if (workNavLink) {
-    workNavLink.addEventListener('click', function (e) {
-      e.preventDefault();
-      scrollToSection('portfolio');
-    });
-  }
-
-  // Toolbar link for ABOUT
-  const aboutNavLink = document.querySelector('.toolbar-menu a[href="#about"]');
-  if (aboutNavLink) {
-    aboutNavLink.addEventListener('click', function (e) {
-      e.preventDefault();
-      scrollToSection('about-me');
-    });
-  }
-
-  // Toolbar link for HOME
-  const homeNavLink = document.querySelector('.toolbar-menu a[href="#hero"]');
-  if (homeNavLink) {
-    homeNavLink.addEventListener('click', function (e) {
-      e.preventDefault();
-      scrollToSection('main-content');
-    });
-  }
-
-  // CONTACT ME button in Portfolio section
-  const portfolioContactBtn = document.querySelector('.portfolio-content .contact-btn');
-  if (portfolioContactBtn) {
-    portfolioContactBtn.addEventListener('click', function (e) {
-      e.preventDefault();
-      scrollToSection('contact'); // Target the contact section ID
-    });
-  }
-
-  // Toolbar link for CONTACT
-  const contactNavLink = document.querySelector('.toolbar-menu a[href="#contact"]');
-  if (contactNavLink) {
-    contactNavLink.addEventListener('click', function (e) {
-      e.preventDefault();
-      scrollToSection('contact');
-    });
-  }
-});
-
-// Initial setup on DOMContentLoaded
-document.addEventListener('DOMContentLoaded', function () {
-  const mainContent = document.getElementById('main-content');
-  const aboutMe = document.getElementById('about-me');
-  const portfolioSection = document.getElementById('portfolio');
-  const contactSection = document.getElementById('contact'); // Get contact section
-
-  if (mainContent) mainContent.style.opacity = '1';
-  if (aboutMe) aboutMe.style.opacity = '0';
-  if (portfolioSection) portfolioSection.style.opacity = '0';
-  if (contactSection) contactSection.style.opacity = '0'; // Initialize contact section opacity
-
-  if (mainContent) mainContent.style.pointerEvents = 'auto';
-  if (aboutMe) aboutMe.style.pointerEvents = 'none';
-  if (portfolioSection) portfolioSection.style.pointerEvents = 'none';
-  if (contactSection) contactSection.style.pointerEvents = 'none'; // Initialize contact pointer-events
-
-  if (mainContent) mainContent.style.zIndex = '4'; // Highest z-index
-  if (aboutMe) aboutMe.style.zIndex = '3';
-  if (portfolioSection) portfolioSection.style.zIndex = '2';
-  if (contactSection) contactSection.style.zIndex = '1'; // Lowest z-index
-});
-
-// Add event listener for the back-to-top button
-const backToTopButton = document.querySelector('.back-to-top');
-if (backToTopButton) {
-  backToTopButton.addEventListener('click', (e) => {
-    e.preventDefault(); // Prevent the default anchor behavior
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  });
-}
-
 // // --- Generate Slides and Dots from Data ---
 // function generatePortfolioItems() {
 //   carousel.innerHTML = ''; // Clear existing slides
@@ -1843,16 +1669,10 @@ if (backToTopButton) {
 // generatePortfolioItems(); // Call the function to build slides initially
 
 // --- Button Splash Ripple Effect ---
+// Visual only: scrolling to the target section is handled by the section links
+// code near the top of this file (it waits for the splash before moving).
 document.querySelectorAll('.about-btn').forEach(button => {
   button.addEventListener('click', function (e) {
-    const href = this.getAttribute('href');
-
-    // The #about button has its own delayed scroll logic above. 
-    // For other buttons (like "MY WORK" going to #work), we prevent default and handle it here.
-    if (href && href !== '#about' && href !== '#hero') {
-      e.preventDefault();
-    }
-
     const rect = this.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -1871,16 +1691,6 @@ document.querySelectorAll('.about-btn').forEach(button => {
     setTimeout(() => {
       ripple.remove();
     }, 600);
-
-    // Delay scroll to allow splash to visibly expand before viewport moves
-    if (href && href !== '#about' && href !== '#hero') {
-      setTimeout(() => {
-        const target = document.querySelector(href);
-        if (target) {
-          smoothScrollTo(target, 900);
-        }
-      }, 350);
-    }
   });
 });
 
