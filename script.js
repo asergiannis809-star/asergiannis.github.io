@@ -905,6 +905,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!currentProjectData) return;
 
+    if (currentProjectData.caseStudy && caseEls) {
+      renderCaseStudy();
+      return;
+    }
+
     if (modalProjectTitle) {
       modalProjectTitle.textContent = getCurrentLanguage() === 'el'
         ? (currentProjectData.modalHeaderEl || currentProjectData.modalHeader || 'Project Details')
@@ -1024,7 +1029,115 @@ document.addEventListener('DOMContentLoaded', () => {
         "<h3>Στη διπλωματική μου εργασία στο ΤΜΣΠΣ του Πανεπιστημίου Αιγαίου σχεδίασα ένα φορετό βραχιόλι και μια συνοδευτική εφαρμογή κινητού που ανιχνεύουν την έναρξη μιας κρίσης πανικού.</h3>",
         "<h3>Όταν εντοπιστεί επεισόδιο, το βραχιόλι παρέχει μια διακριτική απτική (haptic) παρέμβαση που βοηθά τον χρήστη να ανακτήσει τον έλεγχο τη στιγμή που το χρειάζεται.</h3>",
         "<h3>Η εργασία ακολούθησε ανθρωποκεντρική σχεδιαστική διαδικασία, από την έρευνα χρηστών και την ανάπτυξη της ιδέας έως την πρωτοτυποποίηση της συσκευής και της εφαρμογής.</h3>"
-      ]
+      ],
+      // Rendered by renderCaseStudy(); every text is { en, el }
+      caseStudy: {
+        title: { en: "Diploma Thesis", el: "Διπλωματική" },
+        subtitle: { en: "EUFORIA · Panic-detection bracelet & companion app", el: "EUFORIA · Βραχιόλι ανίχνευσης πανικού & εφαρμογή" },
+        year: "2025–26",
+        meta: { en: "DPSD, University of the Aegean · Supervisor: Modestos Stavrakis", el: "ΤΜΣΠΣ, Πανεπιστήμιο Αιγαίου · Επιβλέπων: Μόδεστος Σταυράκης" },
+        tags: [
+          { en: "Sole researcher & designer", el: "Ατομική έρευνα & σχεδιασμός", accent: true },
+          { en: "Wearables", el: "Φορετές τεχνολογίες" },
+          { en: "Digital health", el: "Ψηφιακή υγεία" },
+          { en: "Human-centred design", el: "Ανθρωποκεντρικός σχεδιασμός" }
+        ],
+        images: [
+          { src: "assets/img/thesis-1.webp", caption: { en: "Final prototype: bracelet + companion app", el: "Τελικό πρωτότυπο: βραχιόλι + εφαρμογή" } },
+          { src: "assets/img/thesis-2.webp", caption: { en: "3D-printed TPU body with the status LED", el: "3D-εκτυπωμένο σώμα από TPU με LED κατάστασης" } },
+          { src: "assets/img/thesis-3.webp", caption: { en: "Four colourways", el: "Τέσσερις χρωματικές εκδοχές" } },
+          { src: "assets/img/thesis-4.webp", fit: "contain", caption: { en: "Companion app: home screen", el: "Η εφαρμογή: αρχική οθόνη" } }
+        ],
+        // Placeholder links: no href yet, so they render as inactive buttons
+        links: [
+          { label: { en: "Full thesis", el: "Πλήρης εργασία" }, href: "", primary: true },
+          { label: { en: "Prototype", el: "Πρωτότυπο" }, href: "" }
+        ],
+        pages: [
+          {
+            name: { en: "Overview", el: "Επισκόπηση" },
+            blocks: [
+              { type: "lead", text: { en: "A wristband and Android app that pick up the early signs of a panic attack and respond with a discreet haptic cue, helping the user regain control in the moment, without anyone else noticing.", el: "Ένα βραχιόλι και μια εφαρμογή Android που εντοπίζουν τα πρώτα σημάδια μιας κρίσης πανικού και απαντούν με ένα διακριτικό απτικό σήμα, ώστε ο χρήστης να ανακτήσει τον έλεγχο τη στιγμή που το χρειάζεται, χωρίς να το καταλάβουν οι γύρω του." } },
+              { type: "stats", label: { en: "Problem space", el: "Το πρόβλημα" }, items: [
+                { value: "~10'", text: { en: "for symptoms to peak, so help has to come early", el: "για να κορυφωθούν τα συμπτώματα· η βοήθεια πρέπει να έρθει νωρίς" } },
+                { value: "66.7%", text: { en: "of respondents had a sudden episode of intense fear", el: "των συμμετεχόντων έχουν βιώσει αιφνίδιο επεισόδιο έντονου φόβου" } },
+                { value: "5.17", text: { en: "average daily stress, out of 10", el: "μέσο καθημερινό στρες, με άριστα το 10" } },
+                { value: "n=69", text: { en: "survey responses, plus interviews guided by a psychiatrist", el: "απαντήσεις ερωτηματολογίου, μαζί με συνεντεύξεις με καθοδήγηση ψυχιάτρου" } }
+              ] },
+              { type: "pairs", label: { en: "Insights → decisions", el: "Ευρήματα → αποφάσεις" }, items: [
+                { from: { en: "Can't focus at the peak", el: "Στην κορύφωση δεν υπάρχει συγκέντρωση" }, to: { en: "breathing rhythm through vibration, no reading", el: "ρυθμός αναπνοής μέσω δόνησης, χωρίς διάβασμα" } },
+                { from: { en: "Discretion matters", el: "Η διακριτικότητα μετράει" }, to: { en: "looks like jewellery, silent haptics", el: "μοιάζει με κόσμημα, σιωπηλή δόνηση" } },
+                { from: { en: "Users want control", el: "Ο χρήστης θέλει τον έλεγχο" }, to: { en: "nothing happens without consent", el: "τίποτα χωρίς τη συγκατάθεσή του" } }
+              ] }
+            ]
+          },
+          {
+            name: { en: "Research", el: "Έρευνα" },
+            blocks: [
+              { type: "lead", text: { en: "The process followed human-centred design (ISO 9241-210): a literature review of panic, biosignals and existing products, a 54-question survey, and interviews with people who experience panic attacks.", el: "Η διαδικασία ακολούθησε τον ανθρωποκεντρικό σχεδιασμό (ISO 9241-210): βιβλιογραφική έρευνα για τον πανικό, τα βιοσήματα και τις υπάρχουσες λύσεις, ερωτηματολόγιο 54 ερωτήσεων και συνεντεύξεις με άτομα που βιώνουν κρίσεις πανικού." } },
+              { type: "chips", label: { en: "Seven user needs", el: "Επτά ανάγκες χρηστών" }, items: [
+                { en: "Immediate guidance", el: "Άμεση καθοδήγηση" },
+                { en: "Early warning", el: "Έγκαιρη προειδοποίηση" },
+                { en: "Discretion", el: "Διακριτικότητα" },
+                { en: "Comfort", el: "Άνεση" },
+                { en: "Privacy", el: "Ιδιωτικότητα" },
+                { en: "Personalisation", el: "Εξατομίκευση" },
+                { en: "Context awareness", el: "Επίγνωση πλαισίου" }
+              ] },
+              { type: "personas", label: { en: "Personas", el: "Περσόνες" }, items: [
+                { name: { en: "Anna, 26", el: "Άννα, 26" }, role: { en: "Architect, Athens", el: "Αρχιτέκτονας, Αθήνα" }, text: { en: "Racing heart before presentations; notices the build-up too late.", el: "Ταχυκαρδία πριν από παρουσιάσεις· αντιλαμβάνεται την κλιμάκωση αργά." } },
+                { name: { en: "Eirini, 52", el: "Ειρήνη, 52" }, role: { en: "Teacher, Patras", el: "Καθηγήτρια, Πάτρα" }, text: { en: "Stress from exams and conflict; notices it only once exhausted.", el: "Στρες σε εξετάσεις και συγκρούσεις· το καταλαβαίνει όταν είναι ήδη εξαντλημένη." } },
+                { name: { en: "Kostas, 38", el: "Κώστας, 38" }, role: { en: "Delivery driver, Thessaloniki", el: "Οδηγός διανομών, Θεσσαλονίκη" }, text: { en: "Anxious in traffic, alone at the wheel; can't look at a phone.", el: "Άγχος στην κίνηση, μόνος στο τιμόνι· δεν μπορεί να κοιτάξει το κινητό." } }
+              ] }
+            ]
+          },
+          {
+            name: { en: "Build", el: "Υλοποίηση" },
+            blocks: [
+              { type: "specs", label: { en: "The bracelet", el: "Το βραχιόλι" }, items: [
+                { part: "ESP32-S3", text: { en: "Microcontroller with Bluetooth LE", el: "Μικροελεγκτής με Bluetooth LE" } },
+                { part: "MAX30102", text: { en: "Heart rate (PPG)", el: "Καρδιακός ρυθμός (PPG)" } },
+                { part: "EDA / GSR", text: { en: "Skin response and sweat", el: "Ηλεκτροδερμική δραστηριότητα, εφίδρωση" } },
+                { part: "MPU6050", text: { en: "Motion and tremor", el: "Κίνηση και τρέμουλο" } },
+                { part: { en: "Motor + RGB LED", el: "Μοτέρ + RGB LED" }, text: { en: "Haptic cue and status light", el: "Απτικό σήμα και φωτεινή ένδειξη" } },
+                { part: "450 mAh · USB-C", text: { en: "LiPo battery and charging", el: "Μπαταρία LiPo και φόρτιση" } },
+                { part: "TPU + PETG", text: { en: "3D-printed soft band, rigid sensor shell", el: "3D-εκτυπωμένο μαλακό σώμα, άκαμπτο κέλυφος αισθητήρων" } }
+              ] },
+              { type: "flow", label: { en: "Panic flow in the app", el: "Ροή παρέμβασης στην εφαρμογή" }, items: [
+                { en: "Awareness", el: "Επίγνωση" },
+                { en: "Choose a tool", el: "Επιλογή εργαλείου" },
+                { en: "Breathe 4″ in / 6″ out · CBT · 5-4-3-2-1 grounding", el: "Αναπνοή 4″ / 6″ · CBT · γείωση 5-4-3-2-1" },
+                { en: "Summary", el: "Σύνοψη" }
+              ] },
+              { type: "chips", label: { en: "Also in the app", el: "Επίσης στην εφαρμογή" }, items: [
+                { en: "7-step onboarding with the PDSS questionnaire", el: "Εγγραφή 7 βημάτων με το ερωτηματολόγιο PDSS" },
+                { en: "Daily journal", el: "Ημερολόγιο" },
+                { en: "Therapist mode with PIN and consent", el: "Λειτουργία θεραπευτή με PIN και συναίνεση" }
+              ] },
+              { type: "chips", muted: true, label: { en: "Built with", el: "Εργαλεία" }, items: ["Figma", "Android Studio", "Firebase", "Arduino IDE", "BLE"] }
+            ]
+          },
+          {
+            name: { en: "Evaluation", el: "Αξιολόγηση" },
+            blocks: [
+              { type: "lead", text: { en: "A formative test with 4 users: 35–45 minute think-aloud sessions with the app and the bracelet. The core idea was understood and well received, and the sessions produced specific fixes.", el: "Διαμορφωτική δοκιμή με 4 χρήστες: συνεδρίες 35–45 λεπτών με σκέψη φωναχτά, στην εφαρμογή και στο βραχιόλι. Η βασική ιδέα έγινε κατανοητή και αντιμετωπίστηκε θετικά, και προέκυψαν συγκεκριμένες διορθώσεις." } },
+              { type: "pairs", label: { en: "Findings → fixes", el: "Ευρήματα → διορθώσεις" }, items: [
+                { from: { en: "Panic button felt like an emergency", el: "Το κουμπί πανικού έμοιαζε με έκτακτη ανάγκη" }, to: { en: "clearer name, softer colour", el: "σαφέστερη ονομασία, ηπιότερο χρώμα" } },
+                { from: { en: "“CBT” and “grounding” read as jargon", el: "Οι όροι CBT και grounding ήταν ορολογία" }, to: { en: "plain wording", el: "απλή διατύπωση" } },
+                { from: { en: "Motion sensor flagged tremor at rest", el: "Ο αισθητήρας κίνησης έβλεπε τρόμο σε ακινησία" }, to: { en: "calibrate; combine HR, EDA & motion", el: "βαθμονόμηση· συνδυασμός HR, EDA και κίνησης" } },
+                { from: { en: "One user disliked the vibration", el: "Σε έναν χρήστη δεν άρεσε η δόνηση" }, to: { en: "adjustable strength and rhythm, or off", el: "ρυθμιζόμενη ένταση και ρυθμός, ή απενεργοποίηση" } }
+              ] },
+              { type: "chips", label: { en: "Next steps", el: "Επόμενα βήματα" }, items: [
+                { en: "More data", el: "Περισσότερα δεδομένα" },
+                { en: "ML detection & sensor fusion", el: "Ανίχνευση με μηχανική μάθηση" },
+                { en: "Personalisation", el: "Εξατομίκευση" },
+                { en: "Long-term real-world testing", el: "Μακροχρόνια δοκιμή σε πραγματικές συνθήκες" }
+              ] },
+              { type: "note", text: { en: "A design prototype, not a clinically validated system.", el: "Σχεδιαστικό πρωτότυπο, όχι κλινικά επικυρωμένο σύστημα." } }
+            ]
+          }
+        ]
+      }
     },
     {
       title: "Internship", mainImage: "assets/img/internship-1.webp",
@@ -1048,6 +1161,142 @@ document.addEventListener('DOMContentLoaded', () => {
       ]
     }
   ];
+
+  // --- Case-study layout (projects with `caseStudy` data, e.g. the diploma thesis) ---
+  const modalContentWrapper = projectDetailModal ? projectDetailModal.querySelector('.modal-content-wrapper') : null;
+  const modalLeftPanel = projectDetailModal ? projectDetailModal.querySelector('.modal-left-panel') : null;
+  const caseStudyEl = projectDetailModal ? projectDetailModal.querySelector('.case-study') : null;
+  const caseEls = caseStudyEl ? {
+    image: caseStudyEl.querySelector('.case-image'),
+    caption: caseStudyEl.querySelector('.case-caption'),
+    thumbs: caseStudyEl.querySelector('.case-thumbs'),
+    title: caseStudyEl.querySelector('.case-title'),
+    subtitle: caseStudyEl.querySelector('.case-subtitle'),
+    meta: caseStudyEl.querySelector('.case-meta'),
+    tags: caseStudyEl.querySelector('.case-tags'),
+    body: caseStudyEl.querySelector('.case-body'),
+    links: caseStudyEl.querySelector('.case-links'),
+    pageCount: caseStudyEl.querySelector('.case-page-count'),
+    prev: caseStudyEl.querySelector('.case-page-btn.prev'),
+    next: caseStudyEl.querySelector('.case-page-btn.next')
+  } : null;
+  let currentCasePage = 0;
+  let currentCaseImage = 0;
+
+  // Pick the right language from a { en, el } pair (plain strings pass through)
+  function tr(value) {
+    if (!value || typeof value !== 'object') return value || '';
+    return getCurrentLanguage() === 'el' ? (value.el || value.en) : value.en;
+  }
+
+  function caseSection(label, inner) {
+    return `<section class="case-section"><h4 class="case-label">${tr(label)}</h4>${inner}</section>`;
+  }
+
+  const caseBlockRenderers = {
+    lead: b => `<p class="case-lead">${tr(b.text)}</p>`,
+    note: b => `<p class="case-note">${tr(b.text)}</p>`,
+    stats: b => caseSection(b.label, `<div class="case-stats">${b.items.map(i =>
+      `<div class="case-stat"><span class="case-stat-value">${i.value}</span><span class="case-stat-text">${tr(i.text)}</span></div>`).join('')}</div>`),
+    pairs: b => caseSection(b.label, `<div class="case-pairs${b.items.length === 4 ? ' is-grid' : ''}">${b.items.map(i =>
+      `<div class="case-pair"><strong>${tr(i.from)}</strong> <span class="case-arrow" aria-hidden="true">→</span> ${tr(i.to)}</div>`).join('')}</div>`),
+    chips: b => caseSection(b.label, `<ul class="case-chips${b.muted ? ' is-muted' : ''}">${b.items.map(i =>
+      `<li>${tr(i)}</li>`).join('')}</ul>`),
+    personas: b => caseSection(b.label, `<div class="case-personas">${b.items.map(i =>
+      `<div class="case-persona"><strong>${tr(i.name)}</strong><span>${tr(i.role)}</span><p>${tr(i.text)}</p></div>`).join('')}</div>`),
+    specs: b => caseSection(b.label, `<dl class="case-specs">${b.items.map(i =>
+      `<div><dt>${tr(i.part)}</dt><dd>${tr(i.text)}</dd></div>`).join('')}</dl>`),
+    flow: b => caseSection(b.label, `<ol class="case-flow">${b.items.map(i =>
+      `<li>${tr(i)}</li>`).join('')}</ol>`)
+  };
+
+  function setCaseImage(index) {
+    const images = currentProjectData.caseStudy.images;
+    currentCaseImage = index;
+    const img = images[index];
+    caseEls.image.src = img.src;
+    caseEls.image.alt = tr(img.caption);
+    caseEls.image.classList.toggle('is-contain', img.fit === 'contain');
+    caseEls.caption.textContent = tr(img.caption);
+    caseEls.thumbs.querySelectorAll('.case-thumb').forEach((thumb, i) => {
+      thumb.classList.toggle('active', i === index);
+      thumb.setAttribute('aria-pressed', String(i === index));
+    });
+  }
+
+  function goToCasePage(index) {
+    const pages = currentProjectData.caseStudy.pages;
+    currentCasePage = Math.max(0, Math.min(index, pages.length - 1));
+    const page = pages[currentCasePage];
+    caseEls.body.innerHTML = page.blocks.map(b => caseBlockRenderers[b.type](b)).join('');
+    caseEls.body.scrollTop = 0;
+    caseEls.pageCount.textContent = `${currentCasePage + 1} / ${pages.length}`;
+    // Name the neighbouring pages so the arrows say where they lead
+    const prevPage = pages[currentCasePage - 1];
+    const nextPage = pages[currentCasePage + 1];
+    caseEls.prev.title = prevPage ? tr(prevPage.name) : '';
+    caseEls.next.title = nextPage ? tr(nextPage.name) : '';
+    caseEls.pageCount.title = tr(page.name);
+    caseEls.prev.disabled = currentCasePage === 0;
+    caseEls.next.disabled = currentCasePage === pages.length - 1;
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && caseEls.body.animate) {
+      caseEls.body.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 250, easing: 'ease-out' });
+    }
+  }
+
+  function renderCaseStudy() {
+    const cs = currentProjectData.caseStudy;
+    caseEls.title.textContent = tr(cs.title);
+    caseEls.subtitle.innerHTML = `${tr(cs.subtitle)} · <span class="case-year">${cs.year}</span>`;
+    caseEls.meta.textContent = tr(cs.meta);
+    caseEls.tags.innerHTML = cs.tags.map(t => `<li${t.accent ? ' class="is-accent"' : ''}>${tr(t)}</li>`).join('');
+    caseEls.links.innerHTML = cs.links.map(l => {
+      const cls = `case-link${l.primary ? ' is-primary' : ''}`;
+      const label = `${tr(l.label)} <span aria-hidden="true">↗</span>`;
+      return l.href
+        ? `<a class="${cls}" href="${l.href}" target="_blank" rel="noopener">${label}</a>`
+        : `<span class="${cls} is-placeholder" title="Coming soon">${label}</span>`;
+    }).join('');
+
+    caseEls.thumbs.innerHTML = '';
+    cs.images.forEach((img, i) => {
+      const thumb = document.createElement('button');
+      thumb.type = 'button';
+      thumb.className = 'case-thumb';
+      thumb.setAttribute('aria-label', tr(img.caption));
+      thumb.innerHTML = `<img src="${img.src}" alt="">`;
+      thumb.addEventListener('click', () => setCaseImage(i));
+      caseEls.thumbs.appendChild(thumb);
+    });
+
+    setCaseImage(currentCaseImage);
+    goToCasePage(currentCasePage);
+  }
+
+  function setCaseMode(on) {
+    if (!caseStudyEl) return;
+    caseStudyEl.hidden = !on;
+    if (modalLeftPanel) modalLeftPanel.hidden = on;
+    if (modalContentWrapper) modalContentWrapper.classList.toggle('is-case-study', on);
+  }
+
+  if (caseEls) {
+    caseEls.prev.addEventListener('click', () => goToCasePage(currentCasePage - 1));
+    caseEls.next.addEventListener('click', () => goToCasePage(currentCasePage + 1));
+  }
+
+  // Escape closes the modal; arrow keys page through a case study
+  document.addEventListener('keydown', event => {
+    if (!currentProjectData || !projectDetailModal.classList.contains('show')) return;
+    if (event.key === 'Escape') {
+      closeProjectModal();
+      return;
+    }
+    if (currentProjectData.caseStudy && caseEls) {
+      if (event.key === 'ArrowRight') goToCasePage(currentCasePage + 1);
+      if (event.key === 'ArrowLeft') goToCasePage(currentCasePage - 1);
+    }
+  });
 
   function goToTextPage(pageIndex, animate = true) {
     if (!currentProjectData || !textCarouselTrack || !textCarouselPageDisplay) return;
@@ -1225,6 +1474,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!projectDetailModal || !portfolioProjectsData[projectIndex]) return;
     currentProjectData = portfolioProjectsData[projectIndex];
     currentTextPageIndex = 0;
+
+    const isCaseStudy = Boolean(currentProjectData.caseStudy && caseEls);
+    setCaseMode(isCaseStudy);
+    if (isCaseStudy) {
+      currentCasePage = 0;
+      currentCaseImage = 0;
+      renderCaseStudy();
+      projectDetailModal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+      setTimeout(() => projectDetailModal.classList.add('show'), 10);
+      return;
+    }
+
     if (modalProjectTitle) {
       modalProjectTitle.textContent = getCurrentLanguage() === 'el'
         ? (currentProjectData.modalHeaderEl || currentProjectData.modalHeader || 'Project Details')
