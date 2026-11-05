@@ -1036,38 +1036,27 @@ document.addEventListener('DOMContentLoaded', () => {
         subtitle: { en: "EUFORIA · Panic-detection bracelet & companion app", el: "EUFORIA · Βραχιόλι ανίχνευσης πανικού & εφαρμογή" },
         year: "2025–26",
         meta: { en: "DPSD, University of the Aegean · Supervisor: Modestos Stavrakis", el: "ΤΜΣΠΣ, Πανεπιστήμιο Αιγαίου · Επιβλέπων: Μόδεστος Σταυράκης" },
-        tags: [
-          { en: "Sole researcher & designer", el: "Ατομική έρευνα & σχεδιασμός", accent: true },
-          { en: "Wearables", el: "Φορετές τεχνολογίες" },
-          { en: "Digital health", el: "Ψηφιακή υγεία" },
-          { en: "Human-centred design", el: "Ανθρωποκεντρικός σχεδιασμός" }
-        ],
         images: [
           { src: "assets/img/thesis-1.webp", caption: { en: "Final prototype: bracelet + companion app", el: "Τελικό πρωτότυπο: βραχιόλι + εφαρμογή" } },
           { src: "assets/img/thesis-2.webp", caption: { en: "3D-printed TPU body with the status LED", el: "3D-εκτυπωμένο σώμα από TPU με LED κατάστασης" } },
           { src: "assets/img/thesis-3.webp", caption: { en: "Four colourways", el: "Τέσσερις χρωματικές εκδοχές" } },
           { src: "assets/img/thesis-4.webp", fit: "contain", caption: { en: "Companion app: home screen", el: "Η εφαρμογή: αρχική οθόνη" } }
         ],
-        // Placeholder links: no href yet, so they render as inactive buttons
-        links: [
-          { label: { en: "Full thesis", el: "Πλήρης εργασία" }, href: "", primary: true },
-          { label: { en: "Prototype", el: "Πρωτότυπο" }, href: "" }
-        ],
         pages: [
           {
             name: { en: "Overview", el: "Επισκόπηση" },
             blocks: [
-              { type: "lead", text: { en: "A wristband and Android app that pick up the early signs of a panic attack and respond with a discreet haptic cue, helping the user regain control in the moment, without anyone else noticing.", el: "Ένα βραχιόλι και μια εφαρμογή Android που εντοπίζουν τα πρώτα σημάδια μιας κρίσης πανικού και απαντούν με ένα διακριτικό απτικό σήμα, ώστε ο χρήστης να ανακτήσει τον έλεγχο τη στιγμή που το χρειάζεται, χωρίς να το καταλάβουν οι γύρω του." } },
+              { type: "lead", text: { en: "A wristband and Android app that pick up the early signs of a panic attack and respond with a discreet haptic cue, helping the user regain control in the moment, without anyone else noticing.", el: "Ένα βραχιόλι και μια εφαρμογή Android που εντοπίζουν τα πρώτα σημάδια μιας κρίσης πανικού και απαντούν με διακριτικό απτικό σήμα, ώστε ο χρήστης να ανακτήσει τον έλεγχο χωρίς να το καταλάβουν οι γύρω του." } },
               { type: "stats", label: { en: "Problem space", el: "Το πρόβλημα" }, items: [
-                { value: "~10'", text: { en: "for symptoms to peak, so help has to come early", el: "για να κορυφωθούν τα συμπτώματα· η βοήθεια πρέπει να έρθει νωρίς" } },
-                { value: "66.7%", text: { en: "of respondents had a sudden episode of intense fear", el: "των συμμετεχόντων έχουν βιώσει αιφνίδιο επεισόδιο έντονου φόβου" } },
-                { value: "5.17", text: { en: "average daily stress, out of 10", el: "μέσο καθημερινό στρες, με άριστα το 10" } },
-                { value: "n=69", text: { en: "survey responses, plus interviews guided by a psychiatrist", el: "απαντήσεις ερωτηματολογίου, μαζί με συνεντεύξεις με καθοδήγηση ψυχιάτρου" } }
+                { value: "~10'", text: { en: "for symptoms to peak, so help has to come early", el: "μέχρι την κορύφωση· η βοήθεια πρέπει να έρθει νωρίς" } },
+                { value: "66.7%", text: { en: "of respondents had a sudden episode of intense fear", el: "έχουν βιώσει αιφνίδιο επεισόδιο έντονου φόβου" } },
+                { value: "5.17", text: { en: "average daily stress, out of 10", el: "μέσο καθημερινό στρες, στα 10" } },
+                { value: "n=69", text: { en: "survey responses, plus interviews guided by a psychiatrist", el: "απαντήσεις ερωτηματολογίου και συνεντεύξεις με καθοδήγηση ψυχιάτρου" } }
               ] },
               { type: "pairs", label: { en: "Insights → decisions", el: "Ευρήματα → αποφάσεις" }, items: [
-                { from: { en: "Can't focus at the peak", el: "Στην κορύφωση δεν υπάρχει συγκέντρωση" }, to: { en: "breathing rhythm through vibration, no reading", el: "ρυθμός αναπνοής μέσω δόνησης, χωρίς διάβασμα" } },
+                { from: { en: "Can't focus at the peak", el: "Αδυναμία συγκέντρωσης στην κορύφωση" }, to: { en: "breathing rhythm through vibration, no reading", el: "ρυθμός αναπνοής με δόνηση, χωρίς διάβασμα" } },
                 { from: { en: "Discretion matters", el: "Η διακριτικότητα μετράει" }, to: { en: "looks like jewellery, silent haptics", el: "μοιάζει με κόσμημα, σιωπηλή δόνηση" } },
-                { from: { en: "Users want control", el: "Ο χρήστης θέλει τον έλεγχο" }, to: { en: "nothing happens without consent", el: "τίποτα χωρίς τη συγκατάθεσή του" } }
+                { from: { en: "Users want control", el: "Ανάγκη για έλεγχο" }, to: { en: "nothing happens without consent", el: "τίποτα χωρίς συγκατάθεση" } }
               ] }
             ]
           },
@@ -1092,7 +1081,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ]
           },
           {
-            name: { en: "Build", el: "Υλοποίηση" },
+            name: { en: "Hardware", el: "Υλικό" },
             blocks: [
               { type: "specs", label: { en: "The bracelet", el: "Το βραχιόλι" }, items: [
                 { part: "ESP32-S3", text: { en: "Microcontroller with Bluetooth LE", el: "Μικροελεγκτής με Bluetooth LE" } },
@@ -1102,7 +1091,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 { part: { en: "Motor + RGB LED", el: "Μοτέρ + RGB LED" }, text: { en: "Haptic cue and status light", el: "Απτικό σήμα και φωτεινή ένδειξη" } },
                 { part: "450 mAh · USB-C", text: { en: "LiPo battery and charging", el: "Μπαταρία LiPo και φόρτιση" } },
                 { part: "TPU + PETG", text: { en: "3D-printed soft band, rigid sensor shell", el: "3D-εκτυπωμένο μαλακό σώμα, άκαμπτο κέλυφος αισθητήρων" } }
-              ] },
+              ] }
+            ]
+          },
+          {
+            name: { en: "App", el: "Εφαρμογή" },
+            blocks: [
+              { type: "lead", text: { en: "An Android app, designed in Figma and built in Android Studio with Firebase, that talks to the bracelet over Bluetooth LE.", el: "Μια εφαρμογή Android, σχεδιασμένη στο Figma και υλοποιημένη στο Android Studio με Firebase, που επικοινωνεί με το βραχιόλι μέσω Bluetooth LE." } },
               { type: "flow", label: { en: "Panic flow in the app", el: "Ροή παρέμβασης στην εφαρμογή" }, items: [
                 { en: "Awareness", el: "Επίγνωση" },
                 { en: "Choose a tool", el: "Επιλογή εργαλείου" },
@@ -1173,9 +1168,7 @@ document.addEventListener('DOMContentLoaded', () => {
     title: caseStudyEl.querySelector('.case-title'),
     subtitle: caseStudyEl.querySelector('.case-subtitle'),
     meta: caseStudyEl.querySelector('.case-meta'),
-    tags: caseStudyEl.querySelector('.case-tags'),
     body: caseStudyEl.querySelector('.case-body'),
-    links: caseStudyEl.querySelector('.case-links'),
     pageCount: caseStudyEl.querySelector('.case-page-count'),
     prev: caseStudyEl.querySelector('.case-page-btn.prev'),
     next: caseStudyEl.querySelector('.case-page-btn.next')
@@ -1249,14 +1242,6 @@ document.addEventListener('DOMContentLoaded', () => {
     caseEls.title.textContent = tr(cs.title);
     caseEls.subtitle.innerHTML = `${tr(cs.subtitle)} · <span class="case-year">${cs.year}</span>`;
     caseEls.meta.textContent = tr(cs.meta);
-    caseEls.tags.innerHTML = cs.tags.map(t => `<li${t.accent ? ' class="is-accent"' : ''}>${tr(t)}</li>`).join('');
-    caseEls.links.innerHTML = cs.links.map(l => {
-      const cls = `case-link${l.primary ? ' is-primary' : ''}`;
-      const label = `${tr(l.label)} <span aria-hidden="true">↗</span>`;
-      return l.href
-        ? `<a class="${cls}" href="${l.href}" target="_blank" rel="noopener">${label}</a>`
-        : `<span class="${cls} is-placeholder" title="Coming soon">${label}</span>`;
-    }).join('');
 
     caseEls.thumbs.innerHTML = '';
     cs.images.forEach((img, i) => {

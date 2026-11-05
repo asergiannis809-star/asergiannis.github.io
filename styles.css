@@ -594,33 +594,6 @@ body.menu-open {
   transition-delay: 0.55s, 0.55s, 0s, 0s, 0s;
 }
 
-/* Divider + "Download CV" at the end of the menu (divider is child 5, CV link child 6) */
-.nav-divider {
-  flex: none;
-  width: 2px;
-  height: 1.6em;
-  font-size: clamp(1.5rem, 3vw, 2.5rem);
-  /* match the links so the line is as tall as their text */
-  border-radius: 1px;
-  background: currentColor;
-  color: #ffffff;
-  opacity: 0;
-  transition: opacity 0.4s cubic-bezier(.4, 0, .2, 1);
-}
-
-.toolbar-menu.show .nav-divider {
-  opacity: 0.6;
-  transition-delay: 0.7s;
-}
-
-.toolbar-menu.show a:nth-child(6) {
-  transition-delay: 0.8s, 0.8s, 0s, 0s, 0s;
-}
-
-.toolbar.dark-mode .nav-divider {
-  color: #222222;
-}
-
 /* Keep each menu item on one line; tighten the gaps instead */
 .toolbar-menu {
   gap: clamp(16px, 2.4vw, 40px);
@@ -634,13 +607,11 @@ body.menu-open {
 /* Desktop row: size the text so all items fit between the hamburger and the
    language block (Greek display font is wider, so it gets a smaller size) */
 @media (min-width: 769px) {
-  .toolbar .toolbar-menu a,
-  .toolbar .nav-divider {
+  .toolbar .toolbar-menu a {
     font-size: clamp(1rem, 2.4vw, 2.5rem);
   }
 
-  html[lang="el"] .toolbar .toolbar-menu a,
-  html[lang="el"] .toolbar .nav-divider {
+  html[lang="el"] .toolbar .toolbar-menu a {
     font-size: clamp(0.8rem, 1.75vw, 2.2rem);
   }
 }
@@ -655,43 +626,12 @@ body.menu-open {
     padding: 8px 8px;
   }
 
-  .toolbar .toolbar-menu a,
-  .toolbar .nav-divider {
+  .toolbar .toolbar-menu a {
     font-size: 2.4vw;
   }
 
-  html[lang="el"] .toolbar .toolbar-menu a,
-  html[lang="el"] .toolbar .nav-divider {
+  html[lang="el"] .toolbar .toolbar-menu a {
     font-size: 1.8vw;
-  }
-}
-
-.cv-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4em;
-  white-space: nowrap;
-}
-
-.cv-link i {
-  font-size: 0.75em;
-}
-
-@media (max-width: 768px) {
-  /* Stacked menu: the divider becomes a short horizontal line */
-  .nav-divider {
-    width: 60%;
-    height: 1px;
-    margin: 6px auto;
-    font-size: inherit;
-  }
-
-  .toolbar.dark-mode .nav-divider {
-    color: #ffffff;
-  }
-
-  .cv-link {
-    justify-content: center;
   }
 }
 
@@ -1239,6 +1179,48 @@ html[lang="el"] .description-title {
   line-height: 1.8;
   letter-spacing: 1.5px;
   max-width: 90%;
+}
+
+/* CV + portfolio downloads under the WHO AM I text: outlined, so CONTACT ME stays the main button */
+.download-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+
+.download-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 12px 28px;
+  border: 2px solid #e06d6d;
+  border-radius: 12px;
+  font-family: var(--display-font);
+  letter-spacing: var(--display-letter-spacing);
+  font-size: 1.4rem;
+  color: #e06d6d;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.3s ease;
+}
+
+.download-link i {
+  font-size: 0.8em;
+}
+
+.download-link:hover,
+.download-link:focus-visible {
+  background: #e06d6d;
+  color: #222;
+  transform: translateY(-3px);
+}
+
+@media (max-width: 768px) {
+  .download-link {
+    font-size: 1.15rem;
+    padding: 10px 22px;
+  }
 }
 
 .about-actions {
@@ -3505,40 +3487,14 @@ html[lang="el"] .description-title {
   color: var(--case-faint);
 }
 
-.case-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 18px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.case-tags li {
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: #333;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #ddd;
-}
-
-.case-tags li.is-accent {
-  background: var(--case-accent);
-  color: #fff;
-}
-
 .case-body {
   flex: 1;
   min-height: 0;
-  margin-top: 20px;
-  padding: 0 6px 24px 0;
+  margin-top: 22px;
+  padding: 0 6px 8px 0;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #555 transparent;
-  /* Soft fade at the bottom so scrollable content doesn't end on a hard cut */
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 24px), transparent);
 }
 
 .case-body > * + * {
@@ -3749,61 +3705,19 @@ html[lang="el"] .description-title {
   color: var(--case-faint);
 }
 
-/* Footer: links on the left, pager on the right */
+/* Footer: page counter and arrows */
 .case-footer {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  justify-content: flex-end;
   flex-shrink: 0;
-  margin-top: 4px;
-  padding-top: 20px;
+  padding-top: 16px;
   border-top: 1px solid var(--case-line);
-}
-
-.case-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.case-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 11px 22px;
-  border: 2px solid #4a4a4a;
-  border-radius: 999px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #f2f2f2;
-  text-decoration: none;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-.case-link.is-primary {
-  border-color: #ececec;
-  background: #ececec;
-  color: #111;
-}
-
-a.case-link:hover {
-  border-color: var(--case-accent);
-  background: var(--case-accent);
-  color: #fff;
-}
-
-.case-link.is-placeholder {
-  cursor: default;
-  opacity: 0.55;
 }
 
 .case-pager {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-left: auto;
 }
 
 .case-page-count {
@@ -3848,8 +3762,7 @@ a.case-link:hover {
   cursor: default;
 }
 
-.case-page-btn:focus-visible,
-.case-link:focus-visible {
+.case-page-btn:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 2px;
 }
@@ -3857,7 +3770,7 @@ a.case-link:hover {
 @media (min-width: 769px) {
   .modal-content-wrapper.is-case-study {
     width: min(94vw, 1240px);
-    height: min(88vh, 780px);
+    height: min(92vh, 860px);
   }
 
   .case-study {
@@ -3867,6 +3780,86 @@ a.case-link:hover {
   .is-case-study .modal-close-btn {
     top: 52px;
     right: 52px;
+  }
+}
+
+/* Short laptop screens: tighten the text panel so each page fits without scrolling */
+@media (min-width: 769px) and (max-height: 940px) {
+  .case-study {
+    padding: 20px;
+  }
+
+  .case-panel {
+    padding: 26px 32px 18px;
+  }
+
+  .case-title {
+    font-size: 2.2rem;
+  }
+
+  .case-subtitle {
+    margin-top: 6px;
+    font-size: 0.98rem;
+  }
+
+  .case-body {
+    margin-top: 16px;
+    padding-bottom: 4px;
+  }
+
+  .case-stats,
+  .case-pairs {
+    gap: 10px;
+  }
+
+  .case-body > * + * {
+    margin-top: 16px;
+  }
+
+  .case-lead {
+    font-size: 0.96rem;
+    line-height: 1.5;
+  }
+
+  .case-label {
+    margin-bottom: 8px;
+  }
+
+  .case-stat {
+    padding: 10px 16px;
+  }
+
+  .case-pair,
+  .case-persona {
+    padding: 10px 14px;
+  }
+
+  .case-specs div {
+    padding: 5px 0;
+  }
+
+  .case-footer {
+    padding-top: 12px;
+  }
+
+  .case-page-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .is-case-study .modal-close-btn {
+    top: 40px;
+    right: 40px;
+  }
+}
+
+@media (min-width: 769px) and (max-height: 800px) {
+  .case-title {
+    font-size: 2rem;
+  }
+
+  .case-lead {
+    font-size: 0.92rem;
   }
 }
 
@@ -3915,21 +3908,10 @@ a.case-link:hover {
     flex: none;
     padding-bottom: 0;
     overflow: visible;
-    -webkit-mask-image: none;
-    mask-image: none;
   }
 
   .case-stat-value {
     font-size: 1.5rem;
-  }
-
-  .case-link {
-    padding: 9px 16px;
-    font-size: 0.9rem;
-  }
-
-  .case-links {
-    gap: 8px;
   }
 
   .case-page-btn {
