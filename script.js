@@ -143,19 +143,19 @@ document.addEventListener('click', function (e) {
   }
 });
 
-// Splits the name into floating letters, grouped per word so a line
-// can only break between words (never mid-word on narrow screens)
+// Splits the name into letters that fade in one after another and then float, grouped per
+// word so a line can only break between words (never mid-word on narrow screens)
 function buildHeroNameHTML(text) {
   let index = 0;
   const letter = char =>
-    `<span class="hero-letter" style="animation-delay: ${(index++ * 0.1).toFixed(1)}s">${char}</span>`;
+    `<span class="hero-letter" style="--d: ${(0.2 + index++ * 0.06).toFixed(2)}s">${char}</span>`;
 
   return text
     .replace(/<br\s*\/?>/gi, ' ')
     .trim()
     .split(/\s+/)
     .map((word, i) => {
-      if (i > 0) index++; // keep the wave timing gap where the space was
+      if (i > 0) index++; // small pause where the space was
       return `<span class="hero-word">${[...word].map(letter).join('')}</span>`;
     })
     .join(' ');
@@ -268,7 +268,15 @@ function updateToolbarColour() {
     const rect = section.getBoundingClientRect();
     return rect.top <= toolbarEdge && rect.bottom > toolbarEdge;
   });
-  toolbar.classList.toggle('dark-mode', !!(underToolbar && underToolbar.hasAttribute('data-light')));
+  let light = !!(underToolbar && underToolbar.hasAttribute('data-light'));
+  // My work: the top of the section is covered by teal paint (.paint-drip), so
+  // keep the white toolbar while the toolbar is still over that band
+  const drip = light && underToolbar.querySelector('.paint-drip');
+  if (drip) {
+    const band = parseFloat(drip.style.getPropertyValue('--band')) || 260;
+    if (toolbarEdge - underToolbar.getBoundingClientRect().top < band) light = false;
+  }
+  toolbar.classList.toggle('dark-mode', light);
 }
 
 // Scroll to a section, then settle the fades on it
@@ -570,9 +578,37 @@ if (aboutTabs && aboutPanel) {
           el.hidden = el.dataset.pane !== pane;
         });
         aboutPanel.classList.remove('about-fading');
+        revealAboutPane(aboutPanel.querySelector(`.about-pane[data-pane="${pane}"]`));
       }, ABOUT_FADE_MS);
     });
   });
+
+  // First-time drop-in: each pane's content fades in from above, one piece after
+  // another, the first time it is shown (styles.css: .reveal-item / .is-revealed)
+  aboutPanel.querySelectorAll('.about-pane').forEach(pane => {
+    pane.querySelectorAll(':scope > :not(.about-description), :scope > .about-description > :not(.about-tools-logos)')
+      .forEach((item, i) => {
+        item.classList.add('reveal-item');
+        item.style.setProperty('--i', i);
+      });
+  });
+
+  function revealAboutPane(pane) {
+    if (pane) pane.classList.add('is-revealed');
+  }
+
+  // The visible pane drops in the first time the About section comes into view
+  const aboutSection = document.getElementById('about-me');
+  if (aboutSection && 'IntersectionObserver' in window) {
+    const aboutObserver = new IntersectionObserver(entries => {
+      if (!entries.some(entry => entry.intersectionRatio >= 0.3)) return;
+      revealAboutPane(aboutPanel.querySelector('.about-pane:not([hidden])'));
+      aboutObserver.disconnect();
+    }, { threshold: [0, 0.3] });
+    aboutObserver.observe(aboutSection);
+  } else {
+    aboutPanel.querySelectorAll('.about-pane').forEach(revealAboutPane);
+  }
 }
 
 // === END OF ABOUT ME VERTICAL CAROUSEL ===
@@ -1072,11 +1108,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 { en: "Privacy", el: "Ιδιωτικότητα" },
                 { en: "Personalisation", el: "Εξατομίκευση" },
                 { en: "Context awareness", el: "Επίγνωση πλαισίου" }
-              ] },
-              { type: "personas", label: { en: "Personas", el: "Περσόνες" }, items: [
-                { name: { en: "Anna, 26", el: "Άννα, 26" }, role: { en: "Architect, Athens", el: "Αρχιτέκτονας, Αθήνα" }, text: { en: "Racing heart before presentations; notices the build-up too late.", el: "Ταχυκαρδία πριν από παρουσιάσεις· αντιλαμβάνεται την κλιμάκωση αργά." } },
-                { name: { en: "Eirini, 52", el: "Ειρήνη, 52" }, role: { en: "Teacher, Patras", el: "Καθηγήτρια, Πάτρα" }, text: { en: "Stress from exams and conflict; notices it only once exhausted.", el: "Στρες σε εξετάσεις και συγκρούσεις· το καταλαβαίνει όταν είναι ήδη εξαντλημένη." } },
-                { name: { en: "Kostas, 38", el: "Κώστας, 38" }, role: { en: "Delivery driver, Thessaloniki", el: "Οδηγός διανομών, Θεσσαλονίκη" }, text: { en: "Anxious in traffic, alone at the wheel; can't look at a phone.", el: "Άγχος στην κίνηση, μόνος στο τιμόνι· δεν μπορεί να κοιτάξει το κινητό." } }
               ] }
             ]
           },
@@ -1827,7 +1858,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Simple Tool Logo Tooltips
 setTimeout(function() {
   const tooltip = document.createElement('div');
-  tooltip.style.cssText = 'position:fixed;background:#000;color:#fff;padding:12px 20px;border-radius:8px;z-index:9999;opacity:0;transition:opacity 0.2s;font-family:"Berlinerins Trial", Arial, sans-serif;font-size:20px;';
+  tooltip.style.cssText = 'position:fixed;background:#183B3B;color:#fff;padding:12px 20px;border-radius:8px;z-index:9999;opacity:0;transition:opacity 0.2s;font-family:"Manrope", Arial, sans-serif;font-size:20px;';
   document.body.appendChild(tooltip);
   
   const logos = document.querySelectorAll('.tool-logo');
@@ -1941,3 +1972,480 @@ document.querySelectorAll('.about-btn').forEach(button => {
   });
 });
 
+
+// === Hero "milk" ripples + hidden word ===
+// A small wave simulation on a low-res canvas behind the hero. Moving the mouse
+// pushes into the surface; waves spread out and die down quickly, like milk.
+// A word (HIDDEN_WORD) lies under the surface: where the pointer passes it is
+// uncovered for a moment, like brushing sand away, then slowly covered again.
+// The canvas is upscaled by the browser, which keeps everything soft.
+(function initHeroRipples() {
+  const host = document.getElementById('main-content');
+  if (!host) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  let CELL = 4;            // screen pixels per simulation cell (finer on phones, set in resize)
+  const DAMPING = 0.955;   // lower = thicker liquid, waves fade sooner
+  const RADIUS = 3;        // brush radius in cells
+  const STRENGTH = 60;     // how deep the "finger" pushes
+  const LIGHT = 0.9;       // how strongly slopes are shaded
+  const HIDDEN_WORD = 'DESIGN';
+  const HIDDEN_WORD_2 = 'UI/UX';  // small word to the right of the end of the name
+  const INK_2 = '#7B5EA7';        // purple for HIDDEN_WORD_2
+  const HIDDEN_WORD_3 = 'PRODUCT'; // above the start of the name
+  const INK_3 = '#D64545';        // red for HIDDEN_WORD_3
+  const HIDDEN_WORD_4 = 'INNOVATION'; // behind the "Scroll down" hint
+  const INK_4 = '#3E9B4F';        // green for HIDDEN_WORD_4
+  const REVEAL_RADIUS = 9; // how wide the pointer uncovers the word, in cells
+  const REVEAL_FADE = 0.975; // closer to 1 = the word stays visible longer
+  // Tap (touch screens): one big splash that uncovers the word as it spreads
+  const SPLASH_REACH = 0.7;  // how far the splash spreads, as a share of the screen width
+  const SPLASH_FRAMES = 45;  // how long it takes to spread (60 frames ~ 1 second)
+
+  const canvas = document.createElement('canvas');
+  canvas.className = 'hero-ripples';
+  canvas.setAttribute('aria-hidden', 'true');
+  host.prepend(canvas);
+  const ctx = canvas.getContext('2d');
+
+  const beigeHex = getComputedStyle(document.documentElement).getPropertyValue('--beige').trim() || '#F5EFE6';
+  const base = [1, 3, 5].map(i => parseInt(beigeHex.slice(i, i + 2), 16));
+  const tealHex = getComputedStyle(document.documentElement).getPropertyValue('--teal').trim() || '#147D78';
+  const ink = [1, 3, 5].map(i => parseInt(tealHex.slice(i, i + 2), 16));
+  const ink2 = [1, 3, 5].map(i => parseInt(INK_2.slice(i, i + 2), 16));
+  const ink3 = [1, 3, 5].map(i => parseInt(INK_3.slice(i, i + 2), 16));
+  const ink4 = [1, 3, 5].map(i => parseInt(INK_4.slice(i, i + 2), 16));
+
+  let cols = 0, rows = 0, cur, prev, image, running = false, last = null;
+  let mask, mask2, mask3, mask4, reveal; // mask: where the word's letters are (0..1); reveal: how uncovered each cell is
+  let splashes = [];
+
+  function resize() {
+    CELL = window.innerWidth < 700 ? 3 : 4;
+    cols = Math.max(2, Math.ceil(host.clientWidth / CELL));
+    rows = Math.max(2, Math.ceil(host.clientHeight / CELL));
+    canvas.width = cols;
+    canvas.height = rows;
+    cur = new Float32Array(cols * rows);
+    prev = new Float32Array(cols * rows);
+    image = ctx.createImageData(cols, rows);
+    reveal = new Float32Array(cols * rows);
+    splashes = [];
+    buildMask();
+    paint();
+  }
+
+  // Draw the word into a tiny offscreen canvas and keep its coverage per cell,
+  // roughened with grain so uncovered edges look like sand
+  function buildMask() {
+    const off = document.createElement('canvas');
+    off.width = cols;
+    off.height = rows;
+    const o = off.getContext('2d');
+    const family = getComputedStyle(document.documentElement).getPropertyValue('--font-main').trim() || 'Arial, sans-serif';
+    // Place the word in the space between the hero name and the bottom of the screen
+    const hostTop = host.getBoundingClientRect().top;
+    const nameEl = host.querySelector('.hero-name');
+    const areaTop = nameEl ? (nameEl.getBoundingClientRect().bottom - hostTop) / CELL : rows * 0.3;
+    const areaBottom = Math.min(host.clientHeight, window.innerHeight) / CELL;
+    const areaHeight = Math.max(areaBottom - areaTop, rows * 0.2);
+    // Left-aligned with the start of the hero name
+    const nameText = nameEl && nameEl.querySelector('.hero-letter');
+    const left = Math.max(cols * 0.04, nameText ? (nameText.getBoundingClientRect().left - host.getBoundingClientRect().left) / CELL : cols * 0.08);
+    let size = areaHeight * 0.5;
+    o.font = `800 ${size}px ${family}`;
+    const maxWidth = window.innerWidth < 700 ? 0.75 : 0.5; // wider share of the screen on phones
+    // Never wider than that share, and never past the right edge of the screen
+    const fit = Math.min(cols * maxWidth, cols * 0.96 - left) / o.measureText(HIDDEN_WORD).width;
+    if (fit < 1) size *= fit;
+    o.font = `800 ${size}px ${family}`;
+    o.textAlign = 'left';
+    o.textBaseline = 'middle';
+    o.fillStyle = '#000';
+    o.fillText(HIDDEN_WORD, left, areaTop + areaHeight / 2);
+    mask = readMask(o);
+
+    // Second word: large, at the end of the name's last word and partly tucked
+    // behind it, right-aligned to the screen edge (the name is drawn on top)
+    o.clearRect(0, 0, cols, rows);
+    const words = host.querySelectorAll('.hero-word');
+    const lastWord = words[words.length - 1];
+    if (lastWord) {
+      const hostRect = host.getBoundingClientRect();
+      const w = lastWord.getBoundingClientRect();
+      const wordLeft = (w.left - hostRect.left) / CELL;
+      const wordRight = (w.right - hostRect.left) / CELL;
+      const wordTop = (w.top - hostRect.top) / CELL;
+      const wordH = w.height / CELL;
+      const edge = cols * 0.97;
+      let size2 = wordH * 0.8;
+      o.font = `800 ${size2}px ${family}`;
+      let width2 = o.measureText(HIDDEN_WORD_2).width;
+      // Keep it within the last word's start and the screen edge
+      const maxW = edge - wordLeft;
+      if (width2 > maxW) { size2 *= maxW / width2; o.font = `800 ${size2}px ${family}`; width2 = maxW; }
+      // About 60% of it sticks out past the name; less if the screen edge is closer
+      const right = Math.min(edge, wordRight + width2 * 0.6);
+      o.textAlign = 'right';
+      o.fillText(HIDDEN_WORD_2, right, wordTop + wordH * 0.42);
+    }
+    mask2 = readMask(o);
+
+    // Third word: a bit bigger than the second, above the start of the name's
+    // first word, its lower part tucked behind the name (kept clear of the menu button)
+    o.clearRect(0, 0, cols, rows);
+    const firstWord = words[0];
+    if (firstWord) {
+      const hostRect = host.getBoundingClientRect();
+      const w = firstWord.getBoundingClientRect();
+      const wordLeft = (w.left - hostRect.left) / CELL;
+      const wordTop = (w.top - hostRect.top) / CELL;
+      const wordH = w.height / CELL;
+      let size3 = wordH * 0.9;
+      o.font = `800 ${size3}px ${family}`;
+      let width3 = o.measureText(HIDDEN_WORD_3).width;
+      const maxW = cols * 0.94;
+      if (width3 > maxW) { size3 *= maxW / width3; o.font = `800 ${size3}px ${family}`; width3 = maxW; }
+      const left3 = Math.min(Math.max(cols * 0.03, wordLeft - width3 * 0.12), cols * 0.97 - width3);
+      const menuClear = 96 / CELL; // below the hamburger button
+      const y3 = Math.max(wordTop + wordH * 0.05, menuClear + size3 * 0.4);
+      o.textAlign = 'left';
+      o.fillText(HIDDEN_WORD_3, left3, y3);
+    }
+    mask3 = readMask(o);
+
+    // Fourth word: medium size, behind the "Scroll down" hint. When the hint sits
+    // at the right (desktop) the word extends left from the hint's right edge;
+    // when it is centred (phones) the word is centred on it too.
+    o.clearRect(0, 0, cols, rows);
+    const hint = host.querySelector('.scroll-hint');
+    if (hint && firstWord) {
+      const hostRect = host.getBoundingClientRect();
+      const h = hint.getBoundingClientRect();
+      const nameH = firstWord.getBoundingClientRect().height / CELL;
+      let size4 = nameH * 0.5;
+      o.font = `800 ${size4}px ${family}`;
+      let width4 = o.measureText(HIDDEN_WORD_4).width;
+      const maxW = cols * 0.9;
+      if (width4 > maxW) { size4 *= maxW / width4; o.font = `800 ${size4}px ${family}`; width4 = maxW; }
+      const hintRight = (h.right - hostRect.left) / CELL;
+      const hintCentreX = (h.left + h.width / 2 - hostRect.left) / CELL;
+      const hintCentreY = (h.top + h.height * 0.45 - hostRect.top) / CELL;
+      if (hintCentreX > cols * 0.6) {
+        o.textAlign = 'right';
+        o.fillText(HIDDEN_WORD_4, Math.min(hintRight, cols * 0.97), hintCentreY);
+      } else {
+        // Centred layout (phones): size it to about 70% of the screen width
+        size4 *= (cols * 0.7) / width4;
+        o.font = `800 ${size4}px ${family}`;
+        o.textAlign = 'center';
+        o.fillText(HIDDEN_WORD_4, hintCentreX, hintCentreY);
+      }
+    }
+    mask4 = readMask(o);
+  }
+
+  // Coverage of what is drawn on the offscreen canvas, with sandy grain
+  function readMask(o) {
+    const px = o.getImageData(0, 0, cols, rows).data;
+    const out = new Float32Array(cols * rows);
+    for (let i = 0; i < out.length; i++) {
+      out[i] = (px[i * 4 + 3] / 255) * (0.75 + Math.random() * 0.25);
+    }
+    return out;
+  }
+
+  function uncover(cx, cy) {
+    const r = REVEAL_RADIUS;
+    for (let y = -r; y <= r; y++) {
+      for (let x = -r; x <= r; x++) {
+        const d2 = x * x + y * y;
+        if (d2 > r * r) continue;
+        const px = cx + x, py = cy + y;
+        if (px < 0 || py < 0 || px >= cols || py >= rows) continue;
+        const i = py * cols + px;
+        // Soft brush with a little randomness, so it clears like sand
+        const amount = (1 - d2 / (r * r)) * (0.12 + Math.random() * 0.1);
+        reveal[i] = Math.min(1, reveal[i] + amount);
+      }
+    }
+  }
+
+  function disturb(cx, cy, radius = RADIUS, depth = STRENGTH * 0.25) {
+    for (let y = -radius; y <= radius; y++) {
+      for (let x = -radius; x <= radius; x++) {
+        const d2 = x * x + y * y;
+        if (d2 > radius * radius) continue;
+        const px = cx + x, py = cy + y;
+        if (px < 1 || py < 1 || px >= cols - 1 || py >= rows - 1) continue;
+        // Smooth falloff so the dent has no hard edge
+        cur[py * cols + px] -= depth * (1 - d2 / (radius * radius + 1));
+      }
+    }
+  }
+
+  function splash(cx, cy) {
+    disturb(cx, cy, 8, 70);
+    splashes.push({ x: cx, y: cy, r: 0, max: cols * SPLASH_REACH });
+    if (!running) { running = true; requestAnimationFrame(loop); }
+  }
+
+  // Grow each splash: uncover everything inside it, and push the surface along
+  // its edge so a ripple front travels outwards with it
+  function updateSplashes() {
+    splashes = splashes.filter(sp => {
+      sp.r += sp.max / SPLASH_FRAMES;
+      const r = sp.r, r2 = r * r, left = 1 - r / sp.max;
+      const x0 = Math.max(0, Math.floor(sp.x - r)), x1 = Math.min(cols - 1, Math.ceil(sp.x + r));
+      const y0 = Math.max(0, Math.floor(sp.y - r)), y1 = Math.min(rows - 1, Math.ceil(sp.y + r));
+      for (let y = y0; y <= y1; y++) {
+        for (let x = x0; x <= x1; x++) {
+          const dx = x - sp.x, dy = y - sp.y;
+          if (dx * dx + dy * dy > r2) continue;
+          const i = y * cols + x;
+          const v = 0.85 + Math.random() * 0.15;
+          if (reveal[i] < v) reveal[i] = v;
+        }
+      }
+      const points = Math.ceil((2 * Math.PI * r) / 3);
+      for (let k = 0; k < points; k++) {
+        const a = (k / points) * Math.PI * 2;
+        disturb(Math.round(sp.x + Math.cos(a) * r), Math.round(sp.y + Math.sin(a) * r), 2, 9 * left);
+      }
+      return sp.r < sp.max;
+    });
+  }
+
+  function step() {
+    let peak = 0;
+    for (let y = 1; y < rows - 1; y++) {
+      for (let x = 1; x < cols - 1; x++) {
+        const i = y * cols + x;
+        const v = ((cur[i - 1] + cur[i + 1] + cur[i - cols] + cur[i + cols]) / 2 - prev[i]) * DAMPING;
+        prev[i] = v;
+        const a = v < 0 ? -v : v;
+        if (a > peak) peak = a;
+      }
+    }
+    const t = cur; cur = prev; prev = t;
+    // The uncovered word slowly gets covered again
+    let revealPeak = 0;
+    for (let i = 0; i < reveal.length; i++) {
+      const r = reveal[i] * REVEAL_FADE;
+      reveal[i] = r < 0.004 ? 0 : r;
+      if (r > revealPeak) revealPeak = r;
+    }
+    return Math.max(peak, revealPeak * 100);
+  }
+
+  function paint() {
+    const data = image.data;
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        const i = y * cols + x;
+        let shade = 0;
+        if (x > 0 && x < cols - 1 && y > 0 && y < rows - 1) {
+          // Light from the top-left: slopes facing it get lighter
+          shade = ((cur[i - 1] - cur[i + 1]) + (cur[i - cols] - cur[i + cols])) * LIGHT;
+        }
+        const m = mask ? mask[i] * reveal[i] : 0;
+        const m2 = mask2 ? mask2[i] * reveal[i] : 0;
+        const m3 = mask3 ? mask3[i] * reveal[i] : 0;
+        const m4 = mask4 ? mask4[i] * reveal[i] : 0;
+        const o = i * 4;
+        data[o] = base[0] + (ink[0] - base[0]) * m + (ink2[0] - base[0]) * m2 + (ink3[0] - base[0]) * m3 + (ink4[0] - base[0]) * m4 + shade;
+        data[o + 1] = base[1] + (ink[1] - base[1]) * m + (ink2[1] - base[1]) * m2 + (ink3[1] - base[1]) * m3 + (ink4[1] - base[1]) * m4 + shade;
+        data[o + 2] = base[2] + (ink[2] - base[2]) * m + (ink2[2] - base[2]) * m2 + (ink3[2] - base[2]) * m3 + (ink4[2] - base[2]) * m4 + shade * 1.05;
+        data[o + 3] = 255;
+      }
+    }
+    ctx.putImageData(image, 0, 0);
+  }
+
+  function loop() {
+    if (splashes.length) updateSplashes();
+    const peak = step();
+    paint();
+    // Keep going until the surface is visually flat again
+    if (peak > 0.25 || splashes.length) {
+      requestAnimationFrame(loop);
+    } else {
+      cur.fill(0); prev.fill(0); reveal.fill(0); splashes = []; paint();
+      running = false;
+    }
+  }
+
+  function moveTo(clientX, clientY) {
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.round((clientX - rect.left) / CELL);
+    const y = Math.round((clientY - rect.top) / CELL);
+    // Fill in the path between pointer events so fast moves leave a smooth trail
+    if (last) {
+      const steps = Math.max(1, Math.ceil(Math.hypot(x - last.x, y - last.y) / 2));
+      for (let s = 1; s <= steps; s++) {
+        const sx = Math.round(last.x + (x - last.x) * s / steps);
+        const sy = Math.round(last.y + (y - last.y) * s / steps);
+        disturb(sx, sy);
+        uncover(sx, sy);
+      }
+    } else {
+      disturb(x, y);
+      uncover(x, y);
+    }
+    last = { x, y };
+    if (!running) { running = true; requestAnimationFrame(loop); }
+  }
+
+  // Mouse and pen
+  host.addEventListener('pointermove', event => {
+    if (event.pointerType !== 'touch') moveTo(event.clientX, event.clientY);
+  });
+  host.addEventListener('pointerleave', event => {
+    if (event.pointerType !== 'touch') last = null;
+  });
+
+  // Touch: every touch sets off a big splash where the finger lands. It stays at
+  // that spot even if the finger then drags or scrolls the page. Passive
+  // listener, so scrolling works as usual.
+  host.addEventListener('touchstart', event => {
+    const t = event.touches[0];
+    if (!t || event.touches.length !== 1) return;
+    const rect = canvas.getBoundingClientRect();
+    splash(Math.round((t.clientX - rect.left) / CELL), Math.round((t.clientY - rect.top) / CELL));
+  }, { passive: true });
+
+  // Skip the small height-only resizes phones fire when the address bar shows/hides
+  let resizeTimer, lastW = window.innerWidth, lastH = window.innerHeight;
+  window.addEventListener('resize', () => {
+    if (window.innerWidth === lastW && Math.abs(window.innerHeight - lastH) < 150) return;
+    lastW = window.innerWidth; lastH = window.innerHeight;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(resize, 150);
+  });
+  resize();
+  // Redraw the hidden word once the web font has loaded
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { buildMask(); paint(); });
+})();
+
+// === My work: paint drip ===
+// Places the paint's edge just below the title, and plays the pour each time
+// the section scrolls into view (reset once it is fully out of view).
+(function initPaintDrip() {
+  const section = document.getElementById('portfolio');
+  const drip = section && section.querySelector('.paint-drip');
+  const title = section && section.querySelector('.portfolio-title');
+  if (!drip || !title) return;
+
+  function placeBand() {
+    const sectionTop = section.getBoundingClientRect().top;
+    const titleBottom = title.getBoundingClientRect().bottom;
+    drip.style.setProperty('--band', `${Math.round(titleBottom - sectionTop + 24)}px`);
+    updateToolbarColour();
+  }
+
+  placeBand();
+  window.addEventListener('resize', placeBand);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeBand);
+
+  if (!('IntersectionObserver' in window)) {
+    section.classList.add('is-poured');
+    return;
+  }
+  new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.intersectionRatio >= 0.3) {
+        placeBand();
+        section.classList.add('is-poured');
+      } else if (!entry.isIntersecting) {
+        section.classList.remove('is-poured');
+      }
+    });
+  }, { threshold: [0, 0.3] }).observe(section);
+})();
+
+// === Contact form ===
+// Sends the message to FormSubmit in the background and shows the result under
+// the button. Without JavaScript the form still posts normally.
+(function initContactForm() {
+  const form = document.querySelector('.contact-form');
+  if (!form) return;
+  const status = form.querySelector('.contact-status');
+  const button = form.querySelector('.contact-send');
+  const endpoint = form.action.replace('formsubmit.co/', 'formsubmit.co/ajax/');
+
+  const text = {
+    missing: { en: 'Please fill in all fields.', el: 'Συμπλήρωσε όλα τα πεδία.' },
+    badEmail: { en: 'Please enter a valid email.', el: 'Γράψε ένα έγκυρο email.' },
+    sending: { en: 'Sending…', el: 'Αποστολή…' },
+    sent: { en: "Thanks! I'll get back to you soon.", el: 'Ευχαριστώ! Θα σου απαντήσω σύντομα.' },
+    failed: { en: 'Something went wrong. Please email me directly.', el: 'Κάτι πήγε στραβά. Στείλε μου απευθείας email.' }
+  };
+  const t = key => text[key][document.documentElement.lang === 'el' ? 'el' : 'en'];
+
+  function setStatus(key, kind) {
+    status.textContent = key ? t(key) : '';
+    status.classList.toggle('is-success', kind === 'success');
+    status.classList.toggle('is-error', kind === 'error');
+  }
+
+  form.addEventListener('input', event => {
+    const field = event.target.closest('.contact-field');
+    if (field) field.classList.remove('is-invalid');
+  });
+
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const name = form.elements.name, email = form.elements.email, message = form.elements.message;
+
+    let firstBad = null;
+    [name, email, message].forEach(input => {
+      const bad = !input.value.trim() || (input === email && !input.validity.valid);
+      input.closest('.contact-field').classList.toggle('is-invalid', bad);
+      if (bad && !firstBad) firstBad = input;
+    });
+    if (firstBad) {
+      setStatus(firstBad === email && email.value.trim() ? 'badEmail' : 'missing', 'error');
+      firstBad.focus();
+      return;
+    }
+
+    button.disabled = true;
+    setStatus('sending');
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          name: name.value.trim(),
+          email: email.value.trim(),
+          message: message.value.trim(),
+          _honey: form.elements._honey.value,
+          _subject: `New message from your portfolio: ${name.value.trim()}`,
+          _template: 'table'
+        })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || String(result.success) === 'false') throw new Error(result.message || response.status);
+      form.reset();
+      setStatus('sent', 'success');
+    } catch (error) {
+      setStatus('failed', 'error');
+    } finally {
+      button.disabled = false;
+    }
+  });
+})();
+
+// === Back to top: drop in when the footer (bottom of the page) comes into view ===
+(function initBackToTop() {
+  const footer = document.querySelector('.site-footer');
+  const button = footer && footer.querySelector('.back-to-top');
+  if (!button) return;
+  if (!('IntersectionObserver' in window)) {
+    button.classList.add('is-visible');
+    return;
+  }
+  new IntersectionObserver(entries => {
+    entries.forEach(entry => button.classList.toggle('is-visible', entry.isIntersecting));
+  }, { threshold: 0.4 }).observe(footer);
+})();
